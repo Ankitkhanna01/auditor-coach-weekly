@@ -56,10 +56,12 @@ export type Database = {
           created_at: string
           due_day: number
           id: string
+          is_paid: boolean | null
           last_four_digits: string | null
           name: string
           next_due_date: string
           reminder_sent: boolean | null
+          snoozed_until: string | null
           type: string
           updated_at: string
           user_id: string
@@ -69,10 +71,12 @@ export type Database = {
           created_at?: string
           due_day: number
           id?: string
+          is_paid?: boolean | null
           last_four_digits?: string | null
           name: string
           next_due_date: string
           reminder_sent?: boolean | null
+          snoozed_until?: string | null
           type?: string
           updated_at?: string
           user_id: string
@@ -82,10 +86,12 @@ export type Database = {
           created_at?: string
           due_day?: number
           id?: string
+          is_paid?: boolean | null
           last_four_digits?: string | null
           name?: string
           next_due_date?: string
           reminder_sent?: boolean | null
+          snoozed_until?: string | null
           type?: string
           updated_at?: string
           user_id?: string

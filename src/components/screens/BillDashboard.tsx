@@ -2,31 +2,11 @@ import { useBills, getDaysUntilDue, shouldShowReminder } from "@/hooks/useBills"
 import { useNotifications } from "@/hooks/useNotifications";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
-import { CreditCard, Zap, Home, Tv, Car, Shield, Receipt, Bell, Calendar, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const typeIcons: Record<string, typeof CreditCard> = {
-  credit_card: CreditCard,
-  utility: Zap,
-  rent: Home,
-  subscription: Tv,
-  loan: Car,
-  insurance: Shield,
-  other: Receipt,
-};
-
-const typeColors: Record<string, string> = {
-  credit_card: "from-violet-500 to-purple-600",
-  utility: "from-amber-500 to-orange-600",
-  rent: "from-emerald-500 to-green-600",
-  subscription: "from-pink-500 to-rose-600",
-  loan: "from-blue-500 to-cyan-600",
-  insurance: "from-indigo-500 to-blue-600",
-  other: "from-gray-500 to-slate-600",
-};
+import { BillCard } from "@/components/bills/BillCard";
+import { Receipt, Bell, Calendar, AlertTriangle } from "lucide-react";
 
 export function BillDashboard() {
-  const { bills, isLoading } = useBills();
+  const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
   
   // Initialize notifications - this will check and send notifications when bills load
   useNotifications(bills);
@@ -44,8 +24,12 @@ export function BillDashboard() {
     return getDaysUntilDue(a.next_due_date) - getDaysUntilDue(b.next_due_date);
   });
 
-  // Get bills needing attention (due within 5 business days)
-  const urgentBills = sortedBills.filter(bill => shouldShowReminder(bill.next_due_date));
+  // Get bills needing attention (due within 5 business days, not paid or snoozed)
+  const urgentBills = sortedBills.filter(bill => {
+    if (bill.is_paid) return false;
+    if (bill.snoozed_until && new Date(bill.snoozed_until) > new Date()) return false;
+    return shouldShowReminder(bill.next_due_date);
+  });
 
   return (
     <div className="space-y-6 stagger-children">
@@ -111,72 +95,14 @@ export function BillDashboard() {
             </div>
           </GlassCard>
         ) : (
-          sortedBills.map((bill) => {
-            const Icon = typeIcons[bill.type] || Receipt;
-            const colorClass = typeColors[bill.type] || typeColors.other;
-            const daysUntil = getDaysUntilDue(bill.next_due_date);
-            const isUrgent = shouldShowReminder(bill.next_due_date);
-            
-            return (
-              <GlassCard
-                key={bill.id}
-                className={cn(
-                  "p-4 card-hover",
-                  isUrgent && "border-warning/30 pulse-neon"
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Icon */}
-                  <div className={cn(
-                    "p-3 rounded-xl bg-gradient-to-br",
-                    colorClass
-                  )}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-
-                  {/* Bill Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold truncate">{bill.name}</p>
-                      {bill.last_four_digits && (
-                        <span className="text-xs text-muted-foreground">
-                          •••• {bill.last_four_digits}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Due: {new Date(bill.next_due_date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                      {bill.amount && (
-                        <span className="ml-2">
-                          · ~${bill.amount.toLocaleString()}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Days Until */}
-                  <div className="text-right">
-                    {isUrgent && (
-                      <Bell className="w-4 h-4 text-warning mb-1 ml-auto animate-pulse" />
-                    )}
-                    <p className={cn(
-                      "text-lg font-bold",
-                      daysUntil <= 3 ? "text-destructive" :
-                      daysUntil <= 7 ? "text-warning" :
-                      "text-muted-foreground"
-                    )}>
-                      {daysUntil === 0 ? "Today" :
-                       daysUntil === 1 ? "Tomorrow" :
-                       `${daysUntil} days`}
-                    </p>
-                  </div>
-                </div>
-              </GlassCard>
-            );
-          })
+          sortedBills.map((bill) => (
+            <BillCard
+              key={bill.id}
+              bill={bill}
+              onMarkPaid={markAsPaid}
+              onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
+            />
+          ))
         )}
       </div>
 
@@ -185,9 +111,9 @@ export function BillDashboard() {
         <div className="flex items-start gap-3">
           <Bell className="w-5 h-5 text-primary mt-0.5" />
           <div>
-            <p className="font-medium text-sm">Automatic Reminders</p>
+            <p className="font-medium text-sm">Smart Reminders</p>
             <p className="text-xs text-muted-foreground">
-              Bills are highlighted 5 business days before they're due
+              Tap a bill to mark as paid or snooze notifications
             </p>
           </div>
         </div>

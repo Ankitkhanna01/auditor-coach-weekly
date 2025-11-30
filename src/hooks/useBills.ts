@@ -72,6 +72,8 @@ export interface Bill {
   amount: number | null;
   next_due_date: string;
   reminder_sent: boolean;
+  is_paid: boolean;
+  snoozed_until: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -237,11 +239,102 @@ export function useBills() {
     },
   });
 
+  // Mark bill as paid
+  const markAsPaidMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      const bill = bills.find(b => b.id === billId);
+      if (!bill) throw new Error('Bill not found');
+      
+      // Mark as paid and calculate next month's due date
+      const nextDueDate = calculateNextDueDate(bill.due_day);
+      
+      const { error } = await supabase
+        .from('bills')
+        .update({ 
+          is_paid: true,
+          next_due_date: nextDueDate,
+          snoozed_until: null
+        })
+        .eq('id', billId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
+      toast({
+        title: "Bill marked as paid",
+        description: "Notifications stopped until next billing cycle.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Snooze bill notifications
+  const snoozeBillMutation = useMutation({
+    mutationFn: async ({ billId, snoozeUntil }: { billId: string; snoozeUntil: Date }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      const { error } = await supabase
+        .from('bills')
+        .update({ 
+          snoozed_until: snoozeUntil.toISOString()
+        })
+        .eq('id', billId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
+      toast({
+        title: "Notifications snoozed",
+        description: "You won't receive reminders until the snooze period ends.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reset paid status (for next billing cycle)
+  const resetPaidStatusMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      const { error } = await supabase
+        .from('bills')
+        .update({ is_paid: false })
+        .eq('id', billId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
+    },
+  });
+
   return {
     bills,
     isLoading: authLoading || billsLoading,
     addBill: addBillMutation.mutateAsync,
     updateBill: updateBillMutation.mutateAsync,
     deleteBill: deleteBillMutation.mutateAsync,
+    markAsPaid: markAsPaidMutation.mutateAsync,
+    snoozeBill: snoozeBillMutation.mutateAsync,
+    resetPaidStatus: resetPaidStatusMutation.mutateAsync,
   };
 }
