@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* CRED-style Dark Premium Theme */
+    /* Clean Science-Based Dark Theme - Emerald/Teal */
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
 
@@ -16,16 +16,16 @@
     --popover: 0 0% 4%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 262 83% 64%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 100% 66%;
+    --secondary: 175 84% 32%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 262 83% 64%;
+    --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -39,7 +39,7 @@
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 262 83% 64%;
+    --ring: 160 84% 39%;
 
     --radius: 1rem;
 
@@ -48,23 +48,23 @@
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-blur: 20px;
     
-    --gradient-primary: linear-gradient(135deg, hsl(262, 83%, 64%) 0%, hsl(210, 100%, 66%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(175, 84%, 32%) 100%);
     --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsla(262, 83%, 64%, 0.15) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsla(160, 84%, 39%, 0.15) 0%, transparent 70%);
     
-    --shadow-neon: 0 0 40px hsla(262, 83%, 64%, 0.3);
+    --shadow-neon: 0 0 40px hsla(160, 84%, 39%, 0.3);
     --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
     --shadow-elevated: 0 20px 60px rgba(0, 0, 0, 0.5);
 
     /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 64%;
+    --sidebar-primary: 160 84% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 262 83% 64%;
+    --sidebar-ring: 160 84% 39%;
   }
 
   .dark {
@@ -137,13 +137,13 @@
     font-weight: 600;
     padding: 0.875rem 1.5rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 20px hsla(262, 83%, 64%, 0.4);
+    box-shadow: 0 4px 20px hsla(160, 84%, 39%, 0.4);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-premium:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px hsla(262, 83%, 64%, 0.5);
+    box-shadow: 0 8px 30px hsla(160, 84%, 39%, 0.5);
   }
 
   .btn-premium:active {
@@ -156,13 +156,13 @@
     height: 60px;
     border-radius: 50%;
     background: var(--gradient-primary);
-    box-shadow: 0 8px 32px hsla(262, 83%, 64%, 0.5);
+    box-shadow: 0 8px 32px hsla(160, 84%, 39%, 0.5);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .fab:hover {
     transform: scale(1.08);
-    box-shadow: 0 12px 40px hsla(262, 83%, 64%, 0.6);
+    box-shadow: 0 12px 40px hsla(160, 84%, 39%, 0.6);
   }
 
   /* Progress Ring */
@@ -205,8 +205,8 @@
 
   /* Pulse Animation for Alerts */
   @keyframes pulse-neon {
-    0%, 100% { box-shadow: 0 0 0 0 hsla(262, 83%, 64%, 0.4); }
-    50% { box-shadow: 0 0 20px 5px hsla(262, 83%, 64%, 0.2); }
+    0%, 100% { box-shadow: 0 0 0 0 hsla(160, 84%, 39%, 0.4); }
+    50% { box-shadow: 0 0 20px 5px hsla(160, 84%, 39%, 0.2); }
   }
 
   .pulse-neon {
