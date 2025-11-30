@@ -100,16 +100,27 @@ const Landing = () => {
       </div>
 
       <div className="flex-1 flex flex-col relative z-10 app-container pb-32">
-        {/* Live Users Banner - Urgency */}
-        <div className="bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border-b border-border/50 py-2 px-4">
+        {/* Limited Time Free Banner - Urgency */}
+        <div className="bg-gradient-to-r from-warning/20 via-destructive/10 to-warning/20 border-b border-warning/30 py-2.5 px-4">
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-warning"></span>
+            </span>
+            <span className="text-foreground">
+              <span className="font-bold text-warning">FREE for life</span> — early adopter pricing ends soon
+            </span>
+          </div>
+        </div>
+        
+        {/* Live Users Counter */}
+        <div className="bg-muted/30 py-1.5 px-4 border-b border-border/30">
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
             </span>
-            <span className="text-muted-foreground">
-              <span className="font-semibold text-foreground">{usersToday}</span> people installed today
-            </span>
+            <span>{usersToday} people installed today</span>
           </div>
         </div>
 
@@ -404,9 +415,17 @@ const Landing = () => {
 
       {/* CTA Section - Fixed at bottom */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8 z-20">
+        {/* Early Adopter Badge */}
+        <div className="flex justify-center mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/20 border border-warning/30">
+            <span className="text-warning text-xs">🎁</span>
+            <span className="text-xs font-medium text-warning">Early adopters get lifetime free access</span>
+          </div>
+        </div>
+        
         {/* Urgency Text */}
         <p className="text-center text-xs text-muted-foreground mb-2">
-          <span className="text-warning font-medium">⚡ Limited:</span> Free premium features for early adopters
+          <span className="text-destructive font-semibold">⏰ Offer closing soon</span> — We will start charging new users
         </p>
         
         <Button
@@ -419,20 +438,20 @@ const Landing = () => {
           ) : (
             <>
               <Smartphone className="w-5 h-5 mr-2" />
-              Install Free App
+              Install Free — Lock Lifetime Access
             </>
           )}
         </Button>
         
         <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Check className="w-3 h-3 text-success" /> Free forever
+            <Check className="w-3 h-3 text-success" /> No credit card
           </span>
           <span className="flex items-center gap-1">
             <Check className="w-3 h-3 text-success" /> No app store
           </span>
           <span className="flex items-center gap-1">
-            <Check className="w-3 h-3 text-success" /> Works offline
+            <Check className="w-3 h-3 text-success" /> Cancel anytime
           </span>
         </div>
       </div>
