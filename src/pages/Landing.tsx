@@ -80,12 +80,23 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Top Install Banner - Shows when install is ready */}
+      {deferredPrompt && !isInIframe && (
+        <div 
+          onClick={handleInstall}
+          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-violet-500 to-cyan-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+        >
+          <Smartphone className="w-5 h-5 text-white" />
+          <span className="text-white font-semibold text-sm">Tap here to install NeverLate</span>
+        </div>
+      )}
+
       {/* Ambient Glow */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-violet-600/15 via-cyan-500/5 to-transparent blur-[80px]" />
       </div>
 
-      <div className="flex-1 flex flex-col relative z-10 app-container">
+      <div className={`flex-1 flex flex-col relative z-10 app-container ${deferredPrompt && !isInIframe ? 'pt-12' : ''}`}>
         
         {/* Hero Section - Clean & Focused */}
         <div className="flex-1 flex flex-col justify-center px-6 py-12 text-center">
@@ -251,7 +262,7 @@ const Landing = () => {
       </div>
 
       {/* CTA Section - Fixed at bottom, Clean */}
-      <div className="sticky bottom-0 p-6 bg-gradient-to-t from-background via-background to-transparent pt-10">
+      <div className="sticky bottom-0 z-40 p-6 bg-gradient-to-t from-background via-background to-transparent pt-10">
         {/* Urgency - Single line */}
         <p className="text-center text-sm text-muted-foreground mb-3">
           <span className="text-warning font-medium">Free for early adopters</span> — limited time
