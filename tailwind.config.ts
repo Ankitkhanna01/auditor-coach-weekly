@@ -77,16 +77,16 @@ export default {
         "2xl": "calc(var(--radius) + 8px)",
       },
       boxShadow: {
-        'neon': '0 0 40px hsla(262, 83%, 64%, 0.3)',
-        'neon-strong': '0 0 60px hsla(262, 83%, 64%, 0.5)',
+        'neon': '0 0 40px hsla(160, 84%, 39%, 0.3)',
+        'neon-strong': '0 0 60px hsla(160, 84%, 39%, 0.5)',
         'card': '0 8px 32px rgba(0, 0, 0, 0.4)',
         'elevated': '0 20px 60px rgba(0, 0, 0, 0.5)',
-        'glow': '0 4px 20px hsla(262, 83%, 64%, 0.4)',
+        'glow': '0 4px 20px hsla(160, 84%, 39%, 0.4)',
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, hsl(262, 83%, 64%) 0%, hsl(210, 100%, 66%) 100%)',
+        'gradient-primary': 'linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(175, 84%, 32%) 100%)',
         'gradient-card': 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-        'gradient-radial': 'radial-gradient(ellipse at center, hsla(262, 83%, 64%, 0.15) 0%, transparent 70%)',
+        'gradient-radial': 'radial-gradient(ellipse at center, hsla(160, 84%, 39%, 0.15) 0%, transparent 70%)',
         'gradient-success': 'linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(142, 70%, 45%) 100%)',
         'gradient-warning': 'linear-gradient(135deg, hsl(38, 92%, 50%) 0%, hsl(45, 93%, 47%) 100%)',
         'gradient-destructive': 'linear-gradient(135deg, hsl(0, 72%, 51%) 0%, hsl(0, 84%, 60%) 100%)',
@@ -117,8 +117,8 @@ export default {
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px hsla(262, 83%, 64%, 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsla(262, 83%, 64%, 0.5)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsla(160, 84%, 39%, 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsla(160, 84%, 39%, 0.5)" },
         },
         "shimmer": {
           "0%": { backgroundPosition: "-200% 0" },
