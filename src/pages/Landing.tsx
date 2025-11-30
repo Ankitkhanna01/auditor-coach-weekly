@@ -14,21 +14,42 @@ const Landing = () => {
   const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
+    
+    // Check if running in iframe (Lovable preview)
+    const inIframe = window.self !== window.top;
+    setIsInIframe(inIframe);
 
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      console.log("Install prompt ready!");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    
+    // Also listen for appinstalled event
+    window.addEventListener("appinstalled", () => {
+      setShowSuccess(true);
+      setDeferredPrompt(null);
+    });
+    
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
   const handleInstall = async () => {
+    // If in iframe, prompt user to open in browser
+    if (isInIframe) {
+      window.open(window.location.href, '_blank');
+      return;
+    }
+    
     if (isIOS) {
       setShowIOSInstructions(true);
       return;
@@ -243,6 +264,11 @@ const Landing = () => {
         >
           {isInstalling ? (
             "Installing..."
+          ) : isInIframe ? (
+            <>
+              <Smartphone className="w-5 h-5 mr-2" />
+              Open in Browser to Install
+            </>
           ) : (
             <>
               <Smartphone className="w-5 h-5 mr-2" />
@@ -252,7 +278,7 @@ const Landing = () => {
         </Button>
         
         <p className="text-center text-xs text-muted-foreground mt-3">
-          No app store needed · Works offline · 30 sec setup
+          {isInIframe ? "Open in browser for direct install" : "No app store needed · Works offline · 30 sec setup"}
         </p>
       </div>
     </div>
