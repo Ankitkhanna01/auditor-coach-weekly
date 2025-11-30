@@ -4,18 +4,59 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 
-// Helper to calculate next due date from due_day
-function calculateNextDueDate(dueDay: number): string {
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+export type BillFrequency = 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+
+// Helper to calculate next due date based on frequency
+function calculateNextDueDate(dueDay: number, frequency: BillFrequency = 'monthly', fromDate?: Date): string {
+  const today = fromDate || new Date();
+  today.setHours(0, 0, 0, 0);
   
-  // Create date for this month's due date
-  let nextDue = new Date(currentYear, currentMonth, dueDay);
+  let nextDue: Date;
   
-  // If the due date has already passed this month, move to next month
-  if (nextDue <= today) {
-    nextDue = new Date(currentYear, currentMonth + 1, dueDay);
+  switch (frequency) {
+    case 'weekly': {
+      // dueDay here represents day of week (0-6, Sunday-Saturday)
+      const currentDayOfWeek = today.getDay();
+      const targetDay = dueDay % 7;
+      let daysUntil = targetDay - currentDayOfWeek;
+      if (daysUntil <= 0) daysUntil += 7;
+      nextDue = new Date(today);
+      nextDue.setDate(today.getDate() + daysUntil);
+      break;
+    }
+    case 'biweekly': {
+      // Similar to weekly but add 14 days if within this week
+      const currentDayOfWeek = today.getDay();
+      const targetDay = dueDay % 7;
+      let daysUntil = targetDay - currentDayOfWeek;
+      if (daysUntil <= 0) daysUntil += 14;
+      else if (daysUntil < 7) daysUntil += 7; // Push to next occurrence
+      nextDue = new Date(today);
+      nextDue.setDate(today.getDate() + daysUntil);
+      break;
+    }
+    case 'yearly': {
+      // dueDay represents day of year (1-365) or we use the month approach
+      // For simplicity, use the due_day as day of month in the current/next year
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      nextDue = new Date(currentYear, currentMonth, dueDay);
+      if (nextDue <= today) {
+        // Move to same date next year
+        nextDue = new Date(currentYear + 1, currentMonth, dueDay);
+      }
+      break;
+    }
+    case 'monthly':
+    default: {
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      nextDue = new Date(currentYear, currentMonth, dueDay);
+      if (nextDue <= today) {
+        nextDue = new Date(currentYear, currentMonth + 1, dueDay);
+      }
+      break;
+    }
   }
   
   return nextDue.toISOString().split('T')[0];
@@ -29,7 +70,6 @@ function getBusinessDaysBefore(date: Date, days: number): Date {
   while (count < days) {
     result.setDate(result.getDate() - 1);
     const dayOfWeek = result.getDay();
-    // Skip weekends (0 = Sunday, 6 = Saturday)
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
       count++;
     }
@@ -71,6 +111,7 @@ export interface Bill {
   due_day: number;
   amount: number | null;
   next_due_date: string;
+  frequency: BillFrequency;
   reminder_sent: boolean;
   is_paid: boolean;
   snoozed_until: string | null;
@@ -103,7 +144,7 @@ export function useBills() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch bills
+  // Fetch bills and auto-reset overdue paid bills
   const { data: bills = [], isLoading: billsLoading } = useQuery({
     queryKey: ['bills', user?.id],
     queryFn: async () => {
@@ -116,7 +157,48 @@ export function useBills() {
         .order('next_due_date', { ascending: true });
       
       if (error) throw error;
-      return data as Bill[];
+      
+      const billsData = data as Bill[];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Check for bills that need to be reset (past due date and marked as paid)
+      const billsToReset = billsData.filter(bill => {
+        const dueDate = new Date(bill.next_due_date);
+        dueDate.setHours(0, 0, 0, 0);
+        return bill.is_paid && dueDate < today;
+      });
+      
+      // Auto-reset overdue paid bills
+      if (billsToReset.length > 0) {
+        for (const bill of billsToReset) {
+          const frequency = (bill.frequency || 'monthly') as BillFrequency;
+          const nextDueDate = calculateNextDueDate(bill.due_day, frequency);
+          
+          await supabase
+            .from('bills')
+            .update({ 
+              is_paid: false, 
+              next_due_date: nextDueDate,
+              reminder_sent: false,
+              snoozed_until: null
+            })
+            .eq('id', bill.id)
+            .eq('user_id', user.id);
+        }
+        
+        // Re-fetch after reset
+        const { data: refreshedData, error: refreshError } = await supabase
+          .from('bills')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('next_due_date', { ascending: true });
+        
+        if (refreshError) throw refreshError;
+        return refreshedData as Bill[];
+      }
+      
+      return billsData;
     },
     enabled: !!user,
   });
@@ -129,10 +211,12 @@ export function useBills() {
       last_four_digits?: string;
       due_day: number;
       amount?: number;
+      frequency?: BillFrequency;
     }) => {
       if (!user) throw new Error('Not authenticated');
       
-      const nextDueDate = calculateNextDueDate(billData.due_day);
+      const frequency = billData.frequency || 'monthly';
+      const nextDueDate = calculateNextDueDate(billData.due_day, frequency);
       
       const { data, error } = await supabase
         .from('bills')
@@ -144,6 +228,7 @@ export function useBills() {
           due_day: billData.due_day,
           amount: billData.amount || null,
           next_due_date: nextDueDate,
+          frequency: frequency,
         })
         .select()
         .single();
@@ -172,14 +257,14 @@ export function useBills() {
     mutationFn: async ({ name, data }: { name: string; data: Partial<Bill> }) => {
       if (!user) throw new Error('Not authenticated');
       
-      // Find the bill by name
       const bill = bills.find(b => b.name.toLowerCase().includes(name.toLowerCase()));
       if (!bill) throw new Error(`Bill "${name}" not found`);
       
-      // If due_day is being updated, recalculate next_due_date
       let updateData: any = { ...data };
-      if (data.due_day) {
-        updateData.next_due_date = calculateNextDueDate(data.due_day);
+      if (data.due_day || data.frequency) {
+        const frequency = (data.frequency || bill.frequency || 'monthly') as BillFrequency;
+        const dueDay = data.due_day || bill.due_day;
+        updateData.next_due_date = calculateNextDueDate(dueDay, frequency);
       }
       
       const { error } = await supabase
@@ -211,7 +296,6 @@ export function useBills() {
     mutationFn: async (name: string) => {
       if (!user) throw new Error('Not authenticated');
       
-      // Find the bill by name
       const bill = bills.find(b => b.name.toLowerCase().includes(name.toLowerCase()));
       if (!bill) throw new Error(`Bill "${name}" not found`);
       
@@ -239,7 +323,7 @@ export function useBills() {
     },
   });
 
-  // Mark bill as paid
+  // Mark bill as paid - moves to next cycle based on frequency
   const markAsPaidMutation = useMutation({
     mutationFn: async (billId: string) => {
       if (!user) throw new Error('Not authenticated');
@@ -247,15 +331,16 @@ export function useBills() {
       const bill = bills.find(b => b.id === billId);
       if (!bill) throw new Error('Bill not found');
       
-      // Mark as paid and calculate next month's due date
-      const nextDueDate = calculateNextDueDate(bill.due_day);
+      const frequency = (bill.frequency || 'monthly') as BillFrequency;
+      const nextDueDate = calculateNextDueDate(bill.due_day, frequency);
       
       const { error } = await supabase
         .from('bills')
         .update({ 
           is_paid: true,
           next_due_date: nextDueDate,
-          snoozed_until: null
+          snoozed_until: null,
+          reminder_sent: false
         })
         .eq('id', billId)
         .eq('user_id', user.id);

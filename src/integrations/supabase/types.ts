@@ -55,6 +55,7 @@ export type Database = {
           amount: number | null
           created_at: string
           due_day: number
+          frequency: string
           id: string
           is_paid: boolean | null
           last_four_digits: string | null
@@ -70,6 +71,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           due_day: number
+          frequency?: string
           id?: string
           is_paid?: boolean | null
           last_four_digits?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           due_day?: number
+          frequency?: string
           id?: string
           is_paid?: boolean | null
           last_four_digits?: string | null
