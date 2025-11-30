@@ -2,11 +2,16 @@ import { useState } from "react";
 import { Bill, getDaysUntilDue, shouldShowReminder } from "@/hooks/useBills";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   CreditCard, Zap, Home, Tv, Car, Shield, Receipt, Bell, 
-  Check, Clock, ChevronDown, ChevronUp 
+  Check, Clock, ChevronDown, ChevronUp, CalendarIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +56,9 @@ interface BillCardProps {
 export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [customTime, setCustomTime] = useState("12:00");
   const [isLoading, setIsLoading] = useState(false);
   
   const Icon = typeIcons[bill.type] || Receipt;
@@ -79,7 +87,34 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
     } finally {
       setIsLoading(false);
       setSnoozeOpen(false);
+      setShowCustom(false);
       setExpanded(false);
+    }
+  };
+  
+  const handleCustomSnooze = async () => {
+    if (!customDate) return;
+    
+    setIsLoading(true);
+    try {
+      const [hours, minutes] = customTime.split(":").map(Number);
+      const snoozeUntil = new Date(customDate);
+      snoozeUntil.setHours(hours, minutes, 0, 0);
+      await onSnooze(bill.id, snoozeUntil);
+    } finally {
+      setIsLoading(false);
+      setSnoozeOpen(false);
+      setShowCustom(false);
+      setCustomDate(undefined);
+      setExpanded(false);
+    }
+  };
+  
+  const handleDialogClose = (open: boolean) => {
+    setSnoozeOpen(open);
+    if (!open) {
+      setShowCustom(false);
+      setCustomDate(undefined);
     }
   };
   
@@ -223,28 +258,99 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
       </GlassCard>
 
       {/* Snooze Dialog */}
-      <Dialog open={snoozeOpen} onOpenChange={setSnoozeOpen}>
+      <Dialog open={snoozeOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-[340px]">
           <DialogHeader>
             <DialogTitle>Snooze Notifications</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              How long would you like to snooze reminders for "{bill.name}"?
-            </p>
-            {snoozeOptions.map((option) => (
+          
+          {!showCustom ? (
+            <div className="space-y-2 mt-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                How long would you like to snooze reminders for "{bill.name}"?
+              </p>
+              {snoozeOptions.map((option) => (
+                <Button
+                  key={option.hours}
+                  variant="outline"
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleSnooze(option.hours)}
+                  disabled={isLoading}
+                >
+                  <Clock className="w-4 h-4" />
+                  {option.label}
+                </Button>
+              ))}
+              <div className="pt-2 border-t border-border/50 mt-3">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-muted-foreground"
+                  onClick={() => setShowCustom(true)}
+                  disabled={isLoading}
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  Custom date & time
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-4">
               <Button
-                key={option.hours}
-                variant="outline"
-                className="w-full justify-start gap-3"
-                onClick={() => handleSnooze(option.hours)}
-                disabled={isLoading}
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground -ml-2"
+                onClick={() => setShowCustom(false)}
               >
-                <Clock className="w-4 h-4" />
-                {option.label}
+                ← Back
               </Button>
-            ))}
-          </div>
+              
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !customDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDate ? format(customDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customDate}
+                      onSelect={setCustomDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Time</Label>
+                <Input
+                  type="time"
+                  value={customTime}
+                  onChange={(e) => setCustomTime(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              <Button
+                className="w-full"
+                onClick={handleCustomSnooze}
+                disabled={isLoading || !customDate}
+              >
+                {isLoading ? "Setting..." : "Set Snooze"}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
