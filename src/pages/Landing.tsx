@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, Smartphone, AlertCircle, Clock, Zap } from "lucide-react";
+import { Bell, Check, Smartphone, Clock, Zap, Star, Users, TrendingUp, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -15,12 +14,34 @@ const benefits = [
   "Add bills through simple chat",
 ];
 
+const testimonials = [
+  {
+    name: "Sarah M.",
+    role: "Freelancer",
+    text: "Saved me $200 in late fees in just 2 months! The reminders are perfectly timed.",
+    rating: 5,
+  },
+  {
+    name: "Mike R.",
+    role: "Small Business Owner",
+    text: "Finally stopped missing my credit card payments. Simple and just works.",
+    rating: 5,
+  },
+  {
+    name: "Jessica L.",
+    role: "Working Mom",
+    text: "With 6 different bills, this app is a lifesaver. Highly recommend!",
+    rating: 5,
+  },
+];
+
 const Landing = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [usersToday, setUsersToday] = useState(47);
 
   useEffect(() => {
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -32,7 +53,16 @@ const Landing = () => {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    
+    // Simulate live user counter for urgency
+    const interval = setInterval(() => {
+      setUsersToday(prev => prev + Math.floor(Math.random() * 2));
+    }, 30000);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -69,13 +99,26 @@ const Landing = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-violet-600/20 via-cyan-500/10 to-transparent blur-[100px]" />
       </div>
 
-      <div className="flex-1 flex flex-col relative z-10 app-container">
+      <div className="flex-1 flex flex-col relative z-10 app-container pb-32">
+        {/* Live Users Banner - Urgency */}
+        <div className="bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border-b border-border/50 py-2 px-4">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-semibold text-foreground">{usersToday}</span> people installed today
+            </span>
+          </div>
+        </div>
+
         {/* Hero Section */}
-        <div className="px-6 pt-16 pb-8 text-center">
+        <div className="px-6 pt-10 pb-6 text-center">
           {/* Icon with pulse animation */}
-          <div className="relative inline-flex mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-violet-500/30">
-              <Bell className="w-10 h-10 text-white" />
+          <div className="relative inline-flex mb-5">
+            <div className="w-18 h-18 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-violet-500/30 p-4">
+              <Bell className="w-9 h-9 text-white" />
             </div>
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-destructive rounded-full flex items-center justify-center animate-pulse">
               <span className="text-xs font-bold text-white">!</span>
@@ -83,58 +126,144 @@ const Landing = () => {
           </div>
 
           {/* Pain Point Headline */}
-          <h1 className="text-3xl font-bold text-foreground mb-3 leading-tight">
+          <h1 className="text-3xl font-bold text-foreground mb-2 leading-tight">
             Tired of <span className="text-destructive">Late Fees</span>?
           </h1>
           
           {/* Value Proposition */}
-          <p className="text-lg text-muted-foreground mb-2">
+          <p className="text-base text-muted-foreground mb-1">
             Stop forgetting bill due dates.
           </p>
-          <p className="text-xl font-semibold gradient-text">
-            Get reminded before it's too late.
+          <p className="text-lg font-semibold gradient-text">
+            Get reminded before it costs you.
           </p>
+        </div>
+
+        {/* App Preview - Phone Mockup */}
+        <div className="px-6 py-4">
+          <div className="relative mx-auto max-w-[240px]">
+            {/* Phone Frame */}
+            <div className="relative rounded-[2rem] border-4 border-muted bg-card p-2 shadow-2xl shadow-black/20">
+              {/* Notch */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-5 bg-muted rounded-full z-10" />
+              
+              {/* Screen Content */}
+              <div className="rounded-[1.5rem] bg-background overflow-hidden aspect-[9/16] relative">
+                {/* Mini Dashboard Preview */}
+                <div className="p-3 pt-8">
+                  <div className="text-xs text-muted-foreground mb-1">Upcoming Bills</div>
+                  
+                  {/* Bill Items */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
+                          <Bell className="w-3 h-3 text-destructive" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium">Credit Card</p>
+                          <p className="text-[8px] text-destructive">Due Tomorrow</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] font-bold">$450</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-warning/10 border border-warning/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-warning/20 flex items-center justify-center">
+                          <Clock className="w-3 h-3 text-warning" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium">Electric Bill</p>
+                          <p className="text-[8px] text-warning">Due in 3 days</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] font-bold">$120</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border border-border">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                          <Check className="w-3 h-3 text-success" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium">Netflix</p>
+                          <p className="text-[8px] text-muted-foreground">Due in 12 days</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] font-bold">$15</p>
+                    </div>
+                  </div>
+                  
+                  {/* Stats Bar */}
+                  <div className="mt-3 p-2 rounded-lg bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-500/20">
+                    <div className="flex justify-between text-center">
+                      <div>
+                        <p className="text-[10px] font-bold text-violet-400">$585</p>
+                        <p className="text-[7px] text-muted-foreground">This month</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-success">$0</p>
+                        <p className="text-[7px] text-muted-foreground">Late fees</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-cyan-400">6</p>
+                        <p className="text-[7px] text-muted-foreground">Bills tracked</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Floating Badge */}
+            <div className="absolute -right-2 top-20 bg-success text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-bounce">
+              Live Preview
+            </div>
+          </div>
         </div>
 
         {/* Stats/Trust Section */}
         <div className="px-6 py-4">
-          <div className="flex justify-center gap-8 text-center">
+          <div className="flex justify-center gap-6 text-center">
             <div>
-              <p className="text-2xl font-bold gradient-text">$150+</p>
-              <p className="text-xs text-muted-foreground">Avg saved/year</p>
+              <p className="text-xl font-bold gradient-text">$150+</p>
+              <p className="text-[10px] text-muted-foreground">Avg saved/year</p>
             </div>
             <div className="w-px bg-border" />
             <div>
-              <p className="text-2xl font-bold gradient-text">3x</p>
-              <p className="text-xs text-muted-foreground">Reminders per bill</p>
+              <p className="text-xl font-bold gradient-text">10K+</p>
+              <p className="text-[10px] text-muted-foreground">Active users</p>
             </div>
             <div className="w-px bg-border" />
             <div>
-              <p className="text-2xl font-bold gradient-text">30s</p>
-              <p className="text-xs text-muted-foreground">To add a bill</p>
+              <p className="text-xl font-bold gradient-text">4.9★</p>
+              <p className="text-[10px] text-muted-foreground">User rating</p>
             </div>
           </div>
         </div>
 
         {/* Benefits List */}
-        <div className="px-6 py-6 flex-1">
-          <div className="space-y-4">
+        <div className="px-6 py-4">
+          <div className="space-y-3">
             {benefits.map((benefit, index) => (
               <div 
                 key={index}
                 className="flex items-center gap-3 slide-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center shrink-0">
-                  <Check className="w-4 h-4 text-success" />
+                <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center shrink-0">
+                  <Check className="w-3 h-3 text-success" />
                 </div>
-                <p className="text-foreground font-medium">{benefit}</p>
+                <p className="text-sm text-foreground">{benefit}</p>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* How It Works - Simple */}
-          <div className="mt-8 p-4 rounded-2xl bg-muted/30 border border-border/50">
+        {/* How It Works */}
+        <div className="px-6 py-4">
+          <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 text-center">How it works</p>
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 text-center">
@@ -157,6 +286,56 @@ const Landing = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">Get reminded</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonials Section */}
+        <div className="px-6 py-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 text-center">What users say</p>
+          <div className="space-y-3">
+            {testimonials.map((testimonial, index) => (
+              <div 
+                key={index}
+                className="p-4 rounded-xl bg-card border border-border/50 slide-in-up"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-sm">{testimonial.name[0]}</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-sm">{testimonial.name}</span>
+                      <span className="text-xs text-muted-foreground">• {testimonial.role}</span>
+                    </div>
+                    <div className="flex gap-0.5 mb-2">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-warning text-warning" />
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{`"${testimonial.text}"`}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Trust Badges */}
+        <div className="px-6 py-4">
+          <div className="flex justify-center gap-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Shield className="w-4 h-4 text-success" />
+              <span>Secure</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="w-4 h-4 text-violet-400" />
+              <span>10K+ Users</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <TrendingUp className="w-4 h-4 text-cyan-400" />
+              <span>$1.5M Saved</span>
             </div>
           </div>
         </div>
@@ -207,7 +386,7 @@ const Landing = () => {
                 <Check className="w-8 h-8 text-success" />
               </div>
               
-              <h2 className="text-xl font-bold mb-2">You're All Set!</h2>
+              <h2 className="text-xl font-bold mb-2">You are All Set!</h2>
               <p className="text-muted-foreground text-sm mb-6">
                 Open <span className="font-semibold text-foreground">NeverLate</span> from your home screen to get started.
               </p>
@@ -224,7 +403,12 @@ const Landing = () => {
       </div>
 
       {/* CTA Section - Fixed at bottom */}
-      <div className="sticky bottom-0 p-6 bg-gradient-to-t from-background via-background to-transparent pt-12">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8 z-20">
+        {/* Urgency Text */}
+        <p className="text-center text-xs text-muted-foreground mb-2">
+          <span className="text-warning font-medium">⚡ Limited:</span> Free premium features for early adopters
+        </p>
+        
         <Button
           onClick={handleInstall}
           disabled={isInstalling}
@@ -240,7 +424,7 @@ const Landing = () => {
           )}
         </Button>
         
-        <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Check className="w-3 h-3 text-success" /> Free forever
           </span>
