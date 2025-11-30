@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Key, Shield, Trash2 } from "lucide-react";
+import { LogOut, Key, Shield, Trash2, Share2, Gift } from "lucide-react";
 
-export function Settings() {
+interface SettingsProps {
+  onShareClick?: () => void;
+}
+
+export function Settings({ onShareClick }: SettingsProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -109,6 +113,32 @@ export function Settings() {
     }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: "NeverLate - Bill Reminder App",
+      text: "I use this app to never miss bill payments. It's free for early adopters!",
+      url: window.location.origin,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          title: "Thanks for sharing!",
+          description: "You're helping keep this app free for everyone.",
+        });
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast({
+          title: "Link copied!",
+          description: "Share it with friends to help keep this app free.",
+        });
+      }
+    } catch (err) {
+      // User cancelled
+    }
+  };
+
   return (
     <div className="space-y-6 stagger-children">
       {/* Header */}
@@ -118,6 +148,31 @@ export function Settings() {
           Manage your account
         </p>
       </div>
+
+      {/* Share & Support */}
+      <GlassCard className="p-5 border-violet-500/20 bg-gradient-to-r from-violet-500/5 to-cyan-500/5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500">
+            <Gift className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h2 className="font-semibold">Help Keep This Free</h2>
+            <p className="text-xs text-muted-foreground">Share with friends</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-4">
+          The more people use this app, the longer we can keep it free for everyone — including you!
+        </p>
+
+        <Button
+          onClick={onShareClick || handleShare}
+          className="w-full bg-gradient-to-r from-violet-500 to-cyan-500"
+        >
+          <Share2 className="w-4 h-4 mr-2" />
+          Share with Friends
+        </Button>
+      </GlassCard>
 
       {/* Change Password */}
       <GlassCard className="p-5">
