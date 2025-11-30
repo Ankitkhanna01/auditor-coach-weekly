@@ -90,7 +90,7 @@ const Landing = () => {
           {/* Social Proof - Simple */}
           <div className="flex items-center justify-center gap-1 mb-8">
             <div className="flex -space-x-2">
-              {['S', 'M', 'J', 'A'].map((initial, i) => (
+              {['S', 'M', 'J'].map((initial, i) => (
                 <div 
                   key={i}
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center border-2 border-background text-xs font-bold text-white"
@@ -105,7 +105,7 @@ const Landing = () => {
                   <Star key={i} className="w-3.5 h-3.5 fill-warning text-warning" />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Loved by 10,000+ users</p>
+              <p className="text-xs text-muted-foreground">Join 500+ early adopters</p>
             </div>
           </div>
 
