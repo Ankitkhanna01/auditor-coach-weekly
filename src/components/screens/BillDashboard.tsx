@@ -3,7 +3,16 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { BillCard } from "@/components/bills/BillCard";
-import { Receipt, Bell, Calendar, AlertTriangle } from "lucide-react";
+import { Receipt, Bell, Calendar, AlertTriangle, List } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
 
 export function BillDashboard() {
   const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
@@ -105,6 +114,71 @@ export function BillDashboard() {
           ))
         )}
       </div>
+
+      {/* Bill Schedule Table */}
+      {bills.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <List className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Bill Schedule</h2>
+          </div>
+          
+          <GlassCard className="p-0 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground">Bill</TableHead>
+                  <TableHead className="text-muted-foreground">Due Date</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Frequency</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedBills.map((bill) => {
+                  const daysUntil = getDaysUntilDue(bill.next_due_date);
+                  return (
+                    <TableRow key={bill.id} className="border-border/30">
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span className={bill.is_paid ? "line-through text-muted-foreground" : ""}>
+                            {bill.name}
+                          </span>
+                          {bill.last_four_digits && (
+                            <span className="text-xs text-muted-foreground">
+                              •••• {bill.last_four_digits}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className={
+                            bill.is_paid ? "text-primary" :
+                            daysUntil <= 3 ? "text-destructive font-medium" :
+                            daysUntil <= 7 ? "text-warning" : ""
+                          }>
+                            {bill.is_paid ? "Paid ✓" : format(new Date(bill.next_due_date), "MMM d, yyyy")}
+                          </span>
+                          {!bill.is_paid && (
+                            <span className="text-xs text-muted-foreground">
+                              {daysUntil === 0 ? "Today" :
+                               daysUntil === 1 ? "Tomorrow" :
+                               daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` :
+                               `in ${daysUntil} days`}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right capitalize text-muted-foreground">
+                        {bill.frequency || 'monthly'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </GlassCard>
+        </div>
+      )}
 
       {/* Info Card */}
       <GlassCard className="p-4 bg-primary/5 border-primary/20">
