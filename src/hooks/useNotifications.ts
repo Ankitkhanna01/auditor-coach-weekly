@@ -48,6 +48,20 @@ function saveSentNotifications(sent: Set<string>): void {
   localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify([...sent]));
 }
 
+// Check if bill notifications should be shown (respects paid/snoozed status)
+function shouldNotify(bill: Bill): boolean {
+  // Don't notify if already paid
+  if (bill.is_paid) return false;
+  
+  // Don't notify if snoozed and snooze hasn't expired
+  if (bill.snoozed_until) {
+    const snoozeEnd = new Date(bill.snoozed_until);
+    if (new Date() < snoozeEnd) return false;
+  }
+  
+  return true;
+}
+
 export function useNotifications(bills: Bill[]) {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [sentNotifications, setSentNotifications] = useState<Set<string>>(new Set());
@@ -123,6 +137,9 @@ export function useNotifications(bills: Bill[]) {
     let hasChanges = false;
 
     bills.forEach((bill) => {
+      // Skip if bill is paid or snoozed
+      if (!shouldNotify(bill)) return;
+      
       const businessDays = getBusinessDaysUntilDue(bill.next_due_date);
       const calendarDays = getDaysUntilDue(bill.next_due_date);
       
