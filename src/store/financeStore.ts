@@ -38,90 +38,21 @@ interface FinanceState {
   applyAdvice: (id: string) => void;
 }
 
-const initialAccounts: Account[] = [
-  { id: '1', name: 'TD Checking', type: 'checking', balance: 3200, institution: 'TD Bank' },
-  { id: '2', name: 'EQ Savings', type: 'savings', balance: 6800, institution: 'EQ Bank' },
-  { id: '3', name: 'Wealthsimple TFSA', type: 'tfsa', balance: 8420, mer: 0.15, institution: 'Wealthsimple' },
-  { id: '4', name: 'RRSP Portfolio', type: 'rrsp', balance: 12500, mer: 0.22, institution: 'Questrade' },
-];
+const initialAccounts: Account[] = [];
 
-const initialCreditCards: CreditCard[] = [
-  { id: '1', name: 'Amex Cobalt', balance: 450, limit: 5000, dueDate: '2025-12-03', billingCycle: 25, cashbackRate: 5, todaySpent: 45 },
-  { id: '2', name: 'TD Cashback', balance: 790, limit: 8000, dueDate: '2025-11-28', billingCycle: 21, cashbackRate: 2, todaySpent: 82 },
-];
+const initialCreditCards: CreditCard[] = [];
 
-const initialLoans: Loan[] = [
-  { id: '1', name: 'Car Loan', type: 'car', balance: 4200, interestRate: 6.5, monthlyPayment: 220, dueDate: '2025-12-15', lender: 'TD Auto Finance' },
-  { id: '2', name: 'Mortgage', type: 'mortgage', balance: 92000, interestRate: 3.2, monthlyPayment: 1450, dueDate: '2025-12-01', lender: 'Scotiabank' },
-];
+const initialLoans: Loan[] = [];
 
-const initialSubscriptions: Subscription[] = [
-  { id: '1', name: 'Phone Plan', cost: 60, billingCycle: 'monthly', dueDate: '2025-12-05', category: 'utilities' },
-  { id: '2', name: 'Netflix', cost: 14, billingCycle: 'monthly', dueDate: '2025-12-10', category: 'streaming' },
-  { id: '3', name: 'Spotify', cost: 8, billingCycle: 'monthly', dueDate: '2025-12-12', category: 'streaming' },
-  { id: '4', name: 'Gym Membership', cost: 35, billingCycle: 'monthly', dueDate: '2025-12-01', category: 'fitness' },
-];
+const initialSubscriptions: Subscription[] = [];
 
-const initialGoals: Goal[] = [
-  { id: '1', name: 'New Car', targetAmount: 8000, currentAmount: 3600, targetDate: '2026-06-01', priority: 'high', icon: '🚗' },
-  { id: '2', name: 'Japan Trip', targetAmount: 2500, currentAmount: 250, targetDate: '2026-03-15', priority: 'medium', icon: '✈️' },
-  { id: '3', name: 'Emergency Fund', targetAmount: 5000, currentAmount: 3000, targetDate: '2025-12-31', priority: 'high', icon: '🛡️' },
-];
+const initialGoals: Goal[] = [];
 
-const initialTransactions: Transaction[] = [
-  { id: '1', amount: 45, category: 'Dining', merchant: 'Starbucks', date: '2025-11-28', cardId: '1' },
-  { id: '2', amount: 82, category: 'Groceries', merchant: 'Costco', date: '2025-11-28', cardId: '2' },
-  { id: '3', amount: 120, category: 'Gas', merchant: 'Petro Canada', date: '2025-11-27', cardId: '2' },
-  { id: '4', amount: 35, category: 'Entertainment', merchant: 'Cineplex', date: '2025-11-26', cardId: '1' },
-];
+const initialTransactions: Transaction[] = [];
 
-const initialDiscrepancies: Discrepancy[] = [
-  { 
-    id: '1', 
-    type: 'cashback', 
-    severity: 'medium',
-    title: 'Missing Cashback - Costco',
-    description: 'Expected 2% cashback on $82 Costco purchase but received 0%',
-    question: 'Hi, I noticed my recent Costco purchase of $82 on Nov 28 didn\'t receive the expected 2% cashback. Could you please verify this transaction?',
-    resolved: false
-  },
-  { 
-    id: '2', 
-    type: 'mer', 
-    severity: 'low',
-    title: 'MER Increase Alert',
-    description: 'Wealthsimple TFSA MER appears to have increased from 0.15% to 0.17%',
-    question: 'I noticed the MER on my TFSA account may have changed. Could you confirm the current management expense ratio?',
-    resolved: false
-  },
-];
+const initialDiscrepancies: Discrepancy[] = [];
 
-const initialWeeklyAdvice: WeeklyAdvice[] = [
-  {
-    id: '1',
-    title: 'Accelerate Car Goal',
-    description: 'You can reach your Car goal 2 months earlier by adding $45 weekly',
-    action: 'Set up $45 weekly transfer to Car savings',
-    impact: '+$180/month toward goal',
-    applied: false
-  },
-  {
-    id: '2',
-    title: 'Optimize Card Usage',
-    description: 'Switch groceries to Amex Cobalt for 5% back instead of 2%',
-    action: 'Use Amex Cobalt for all grocery purchases',
-    impact: 'Save ~$15 more cashback/month',
-    applied: false
-  },
-  {
-    id: '3',
-    title: 'Dining Overspend Alert',
-    description: 'You\'re 18% above your usual dining pattern this month',
-    action: 'Consider meal prepping for remaining week',
-    impact: 'Save ~$40 this week',
-    applied: false
-  },
-];
+const initialWeeklyAdvice: WeeklyAdvice[] = [];
 
 export const useFinanceStore = create<FinanceState>()(
   persist(
