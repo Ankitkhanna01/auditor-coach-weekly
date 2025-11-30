@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { Bell, Shield, Clock, CheckCircle2 } from "lucide-react";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -100,110 +100,132 @@ const Auth = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      {/* Ambient glow */}
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Subtle gradient background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-emerald-500/8 via-teal-500/4 to-transparent blur-[100px]" />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Bill Reminder
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative z-10">
+        {/* Logo & Branding */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 mb-4 shadow-lg shadow-emerald-500/20">
+            <Bell className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            NeverLate
           </h1>
-          <p className="text-muted-foreground mt-2">
-            Never miss a payment
+          <p className="text-muted-foreground text-sm mt-1">
+            Bill reminder that works
           </p>
         </div>
 
-        <GlassCard className="p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
-            {isSignUp ? "Create Account" : "Welcome Back"}
-          </h2>
+        {/* Auth Card */}
+        <div className="w-full max-w-sm">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-foreground mb-6 text-center">
+              {isSignUp ? "Create your account" : "Welcome back"}
+            </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-background/50 border-border/50"
-              />
-              {errors.email && (
-                <p className="text-destructive text-sm">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-background/50 border-border/50"
-              />
-              {errors.password && (
-                <p className="text-destructive text-sm">{errors.password}</p>
-              )}
-            </div>
-
-            {isSignUp && (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+                <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-background/50 border-border/50"
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 bg-background/50 border-border/50 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
-                {errors.confirmPassword && (
-                  <p className="text-destructive text-sm">{errors.confirmPassword}</p>
+                {errors.email && (
+                  <p className="text-destructive text-xs">{errors.email}</p>
                 )}
               </div>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              ) : (
-                isSignUp ? "Sign Up" : "Sign In"
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 bg-background/50 border-border/50 focus:border-emerald-500 focus:ring-emerald-500/20"
+                />
+                {errors.password && (
+                  <p className="text-destructive text-xs">{errors.password}</p>
+                )}
+              </div>
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-foreground text-sm">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-11 bg-background/50 border-border/50 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-destructive text-xs">{errors.confirmPassword}</p>
+                  )}
+                </div>
               )}
-            </Button>
-          </form>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({});
-              }}
-              className="text-primary hover:text-accent transition-colors text-sm"
-            >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
-            </button>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 font-medium"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  isSignUp ? "Create Account" : "Sign In"
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setErrors({});
+                }}
+                className="text-emerald-500 hover:text-emerald-400 transition-colors text-sm"
+              >
+                {isSignUp
+                  ? "Already have an account? Sign in"
+                  : "Don't have an account? Sign up"}
+              </button>
+            </div>
           </div>
-        </GlassCard>
+
+          {/* Trust Indicators */}
+          <div className="mt-8 grid grid-cols-3 gap-4">
+            {[
+              { icon: Shield, label: "Secure" },
+              { icon: Clock, label: "Reliable" },
+              { icon: CheckCircle2, label: "Simple" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

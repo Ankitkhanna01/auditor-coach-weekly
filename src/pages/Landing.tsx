@@ -84,7 +84,7 @@ const Landing = () => {
       {deferredPrompt && !isInIframe && (
         <div 
           onClick={handleInstall}
-          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-violet-500 to-cyan-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
           <Smartphone className="w-5 h-5 text-white" />
           <span className="text-white font-semibold text-sm">Tap here to install NeverLate</span>
@@ -93,7 +93,7 @@ const Landing = () => {
 
       {/* Ambient Glow */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-violet-600/15 via-cyan-500/5 to-transparent blur-[80px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-emerald-600/15 via-teal-500/5 to-transparent blur-[80px]" />
       </div>
 
       <div className={`flex-1 flex flex-col relative z-10 app-container ${deferredPrompt && !isInIframe ? 'pt-12' : ''}`}>
@@ -103,10 +103,10 @@ const Landing = () => {
           
           {/* App Icon */}
           <div className="relative inline-flex mx-auto mb-8">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-violet-500/25">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-500/25">
               <Bell className="w-10 h-10 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-destructive rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
               <span className="text-xs font-bold text-white">!</span>
             </div>
           </div>
@@ -128,7 +128,7 @@ const Landing = () => {
               {['S', 'M', 'J'].map((initial, i) => (
                 <div 
                   key={i}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center border-2 border-background text-xs font-bold text-white"
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center border-2 border-background text-xs font-bold text-white"
                 >
                   {initial}
                 </div>
@@ -178,7 +178,7 @@ const Landing = () => {
                   { step: "4", title: "Open from home screen", desc: "Create account & start!" },
                 ].map((item) => (
                   <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
                       <span className="text-white font-bold text-sm">{item.step}</span>
                     </div>
                     <div>
@@ -191,7 +191,7 @@ const Landing = () => {
 
               <Button
                 onClick={() => setShowIOSInstructions(false)}
-                className="w-full mt-8 h-12 bg-gradient-to-r from-violet-500 to-cyan-500"
+                className="w-full mt-8 h-12 bg-gradient-to-r from-emerald-500 to-teal-600"
               >
                 Got it!
               </Button>
@@ -216,7 +216,7 @@ const Landing = () => {
                   { step: "4", title: "Open from home screen", desc: "Create account & start!" },
                 ].map((item) => (
                   <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
                       <span className="text-white font-bold text-sm">{item.step}</span>
                     </div>
                     <div>
@@ -229,7 +229,7 @@ const Landing = () => {
 
               <Button
                 onClick={() => setShowAndroidInstructions(false)}
-                className="w-full mt-8 h-12 bg-gradient-to-r from-violet-500 to-cyan-500"
+                className="w-full mt-8 h-12 bg-gradient-to-r from-emerald-500 to-teal-600"
               >
                 Got it!
               </Button>
@@ -252,7 +252,7 @@ const Landing = () => {
 
               <Button
                 onClick={() => setShowSuccess(false)}
-                className="w-full h-12 bg-gradient-to-r from-violet-500 to-cyan-500"
+                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-600"
               >
                 Got it!
               </Button>
@@ -271,7 +271,7 @@ const Landing = () => {
         <Button
           onClick={handleInstall}
           disabled={isInstalling}
-          className="w-full h-14 text-lg font-bold bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90 rounded-2xl shadow-xl shadow-violet-500/25 transition-all hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full h-14 text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 rounded-2xl shadow-xl shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
         >
           {isInstalling ? (
             "Installing..."
