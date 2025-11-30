@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home, MessageCircle, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BillDashboard } from "@/components/screens/BillDashboard";
 import { BillChat } from "@/components/chat/BillChat";
 import { Settings } from "@/components/screens/Settings";
+import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
+import { SharePrompt } from "@/components/onboarding/SharePrompt";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useAuth } from "@/hooks/useAuth";
+import { useBills } from "@/hooks/useBills";
 
 const tabs = [
   { id: "dashboard", icon: Home, label: "Home" },
@@ -13,6 +18,25 @@ const tabs = [
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { user } = useAuth();
+  const { bills } = useBills();
+  
+  const {
+    showOnboarding,
+    completeOnboarding,
+    showSharePrompt,
+    checkSharePrompt,
+    dismissSharePrompt,
+    markAsShared,
+    triggerSharePrompt,
+  } = useOnboarding(user?.id);
+
+  // Check for share prompt when bill count changes
+  useEffect(() => {
+    if (bills && bills.length > 0) {
+      checkSharePrompt(bills.length);
+    }
+  }, [bills?.length, checkSharePrompt]);
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -21,7 +45,7 @@ const Index = () => {
       case "chat":
         return <BillChat />;
       case "settings":
-        return <Settings />;
+        return <Settings onShareClick={triggerSharePrompt} />;
       default:
         return <BillDashboard />;
     }
@@ -29,6 +53,19 @@ const Index = () => {
 
   return (
     <div className="app-container min-h-screen bg-background">
+      {/* Onboarding Tutorial */}
+      {showOnboarding && (
+        <OnboardingTutorial onComplete={completeOnboarding} />
+      )}
+
+      {/* Share Prompt */}
+      {showSharePrompt && !showOnboarding && (
+        <SharePrompt 
+          onClose={dismissSharePrompt} 
+          onShare={markAsShared} 
+        />
+      )}
+
       {/* Main Content */}
       <main className={cn(
         "overflow-y-auto min-h-screen",
