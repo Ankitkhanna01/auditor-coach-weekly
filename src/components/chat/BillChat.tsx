@@ -115,6 +115,7 @@ export function BillChat() {
           last_four_digits: action.data.last_four_digits,
           due_day: action.data.due_day,
           amount: action.data.amount,
+          frequency: action.data.frequency || "monthly",
         });
         setExecutedActions(prev => new Set([...prev, actionKey]));
       } else if (action.action === "update" && action.type === "bill") {
@@ -143,10 +144,18 @@ export function BillChat() {
   const buildContext = () => {
     if (bills.length === 0) return "";
     
+    const frequencyLabels: Record<string, string> = {
+      weekly: 'every week',
+      biweekly: 'every 2 weeks',
+      monthly: 'each month',
+      yearly: 'each year',
+    };
+    
     const billsList = bills.map(b => {
       let desc = `- ${b.name} (${b.type})`;
       if (b.last_four_digits) desc += ` ending in ${b.last_four_digits}`;
-      desc += `, due on the ${b.due_day}${getDaySuffix(b.due_day)} of each month`;
+      const freq = b.frequency || 'monthly';
+      desc += `, due on the ${b.due_day}${getDaySuffix(b.due_day)} ${frequencyLabels[freq] || 'each month'}`;
       if (b.amount) desc += `, ~$${b.amount}`;
       return desc;
     }).join('\n');

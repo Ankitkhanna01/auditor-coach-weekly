@@ -184,6 +184,9 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
                     month: 'short',
                     day: 'numeric'
                   })}
+                  <span className="ml-2 text-xs opacity-70">
+                    ({bill.frequency || 'monthly'})
+                  </span>
                   {bill.amount && (
                     <span className="ml-2">
                       · ~${bill.amount.toLocaleString()}
