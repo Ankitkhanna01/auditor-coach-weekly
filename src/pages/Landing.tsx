@@ -11,6 +11,7 @@ const Landing = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -33,25 +34,27 @@ const Landing = () => {
       return;
     }
 
-    if (!deferredPrompt) {
-      alert("Tap the browser menu (⋮) and select 'Add to Home Screen' or 'Install App'");
+    // If native prompt is available, use it directly
+    if (deferredPrompt) {
+      setIsInstalling(true);
+      
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          setShowSuccess(true);
+        }
+      } catch (e) {
+        console.error("Install error:", e);
+      } finally {
+        setIsInstalling(false);
+        setDeferredPrompt(null);
+      }
       return;
     }
 
-    setIsInstalling(true);
-    
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setShowSuccess(true);
-      }
-    } catch (e) {
-      console.error("Install error:", e);
-    } finally {
-      setIsInstalling(false);
-      setDeferredPrompt(null);
-    }
+    // Fallback: show Android instructions modal
+    setShowAndroidInstructions(true);
   };
 
   return (
@@ -156,6 +159,44 @@ const Landing = () => {
 
               <Button
                 onClick={() => setShowIOSInstructions(false)}
+                className="w-full mt-8 h-12 bg-gradient-to-r from-violet-500 to-cyan-500"
+              >
+                Got it!
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Android Instructions Modal */}
+        {showAndroidInstructions && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-end animate-in fade-in">
+            <div className="bg-card rounded-t-3xl p-6 w-full max-h-[85vh] overflow-y-auto">
+              <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-6" />
+              
+              <h2 className="text-xl font-bold text-center mb-2">Install on Android</h2>
+              <p className="text-sm text-muted-foreground text-center mb-6">Follow these quick steps:</p>
+              
+              <div className="space-y-5">
+                {[
+                  { step: "1", title: "Tap Menu", desc: "The ⋮ icon in top right corner" },
+                  { step: "2", title: "Install App", desc: "Or 'Add to Home Screen'" },
+                  { step: "3", title: "Tap Install", desc: "Confirm the installation" },
+                  { step: "4", title: "Open from home screen", desc: "Create account & start!" },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+                      <span className="text-white font-bold text-sm">{item.step}</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => setShowAndroidInstructions(false)}
                 className="w-full mt-8 h-12 bg-gradient-to-r from-violet-500 to-cyan-500"
               >
                 Got it!
