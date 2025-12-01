@@ -19,18 +19,67 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bill-chat`;
 const STORAGE_KEY = 'bill-chat-messages';
 const EXECUTED_KEY = 'bill-chat-executed';
 const CHAT_TIMESTAMP_KEY = 'bill-chat-timestamp';
+const LAST_VISIT_KEY = 'bill-chat-last-visit';
+const LAST_ACTIVITY_KEY = 'bill-chat-last-activity';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning!";
-  if (hour < 17) return "Good afternoon!";
-  return "Good evening!";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+const getWelcomeMessage = (lastVisit: number | null, lastActivity: string | null, bills: any[]) => {
+  const now = Date.now();
+  const greeting = getGreeting();
+  
+  // First time user
+  if (!lastVisit) {
+    return `${greeting}! 👋 What bills would you like to add or manage today?`;
+  }
+  
+  const daysSinceVisit = Math.floor((now - lastVisit) / ONE_DAY_MS);
+  
+  // Same day
+  if (daysSinceVisit < 1) {
+    return `${greeting}! What bills would you like to add or manage today?`;
+  }
+  
+  // Been away for a while
+  let message = "";
+  
+  if (daysSinceVisit >= 30) {
+    message = `Welcome back! We missed you! 🎉 It's been over a month since your last visit.`;
+  } else if (daysSinceVisit >= 14) {
+    message = `Welcome back! We missed you! It's been ${Math.floor(daysSinceVisit / 7)} weeks since we last chatted.`;
+  } else if (daysSinceVisit >= 7) {
+    message = `Welcome back! It's been about a week since your last visit.`;
+  } else if (daysSinceVisit >= 2) {
+    message = `${greeting}! Good to see you again after ${daysSinceVisit} days.`;
+  } else {
+    message = `${greeting}! Welcome back!`;
+  }
+  
+  // Add last activity reminder
+  if (lastActivity) {
+    message += `\n\nLast time you were here, ${lastActivity}`;
+  }
+  
+  // Add bill summary if they have bills
+  if (bills.length > 0) {
+    message += `\n\nYou're currently tracking ${bills.length} bill${bills.length > 1 ? 's' : ''}.`;
+  }
+  
+  message += `\n\nWhat would you like to do today?`;
+  
+  return message;
 };
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
-  content: `${getGreeting()} What bills would you like to add or manage today?`
+  content: `${getGreeting()}! 👋 What bills would you like to add or manage today?`
 };
 
 export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
@@ -56,17 +105,26 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
   // Load chat history and auto-delete if older than 7 days
   useEffect(() => {
     if (userId) {
-      // Check timestamp first
+      // Get last visit and last activity
+      const lastVisitStored = localStorage.getItem(`${LAST_VISIT_KEY}-${userId}`);
+      const lastVisit = lastVisitStored ? parseInt(lastVisitStored, 10) : null;
+      const lastActivity = localStorage.getItem(`${LAST_ACTIVITY_KEY}-${userId}`);
+      
+      // Check chat timestamp
       const timestampStored = localStorage.getItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
       const timestamp = timestampStored ? parseInt(timestampStored, 10) : 0;
       const now = Date.now();
       
-      // If chat is older than 7 days, clear it
+      // If chat is older than 7 days, clear messages but keep last activity
       if (timestamp && (now - timestamp) > SEVEN_DAYS_MS) {
         localStorage.removeItem(`${STORAGE_KEY}-${userId}`);
         localStorage.removeItem(`${EXECUTED_KEY}-${userId}`);
         localStorage.removeItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
-        setMessages([{ ...INITIAL_MESSAGE, content: `${getGreeting()} What bills would you like to add or manage today?` }]);
+        // Generate welcome back message with last activity
+        const welcomeMsg = getWelcomeMessage(lastVisit, lastActivity, bills);
+        setMessages([{ role: "assistant", content: welcomeMsg }]);
+        // Update last visit
+        localStorage.setItem(`${LAST_VISIT_KEY}-${userId}`, now.toString());
         return;
       }
       
@@ -75,12 +133,26 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setMessages(parsed);
+            // Check if this is a returning user (more than a day since last visit)
+            if (lastVisit && (now - lastVisit) > ONE_DAY_MS) {
+              // Add welcome back message at the end
+              const welcomeMsg = getWelcomeMessage(lastVisit, lastActivity, bills);
+              setMessages([...parsed, { role: "assistant", content: welcomeMsg }]);
+            } else {
+              setMessages(parsed);
+            }
           }
         } catch (e) {
           console.error("Failed to parse chat history:", e);
         }
+      } else {
+        // No stored messages - show welcome message
+        const welcomeMsg = getWelcomeMessage(lastVisit, lastActivity, bills);
+        setMessages([{ role: "assistant", content: welcomeMsg }]);
       }
+      
+      // Update last visit timestamp
+      localStorage.setItem(`${LAST_VISIT_KEY}-${userId}`, now.toString());
       
       // Load executed actions
       const executedStored = localStorage.getItem(`${EXECUTED_KEY}-${userId}`);
@@ -93,7 +165,7 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
         }
       }
     }
-  }, [userId]);
+  }, [userId, bills.length]);
 
   // Handle context message from bill click
   useEffect(() => {
@@ -139,14 +211,23 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Clear history
+  // Clear history (but keep last activity for future welcome back)
   const clearHistory = () => {
-    setMessages([{ ...INITIAL_MESSAGE, content: `${getGreeting()} What bills would you like to add or manage today?` }]);
+    const welcomeMsg = `${getGreeting()}! What bills would you like to add or manage today?`;
+    setMessages([{ role: "assistant", content: welcomeMsg }]);
     setExecutedActions(new Set());
     if (userId) {
       localStorage.removeItem(`${STORAGE_KEY}-${userId}`);
       localStorage.removeItem(`${EXECUTED_KEY}-${userId}`);
       localStorage.removeItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
+      // Keep LAST_VISIT_KEY and LAST_ACTIVITY_KEY for welcome back feature
+    }
+  };
+
+  // Save last activity when action is executed
+  const saveLastActivity = (activity: string) => {
+    if (userId) {
+      localStorage.setItem(`${LAST_ACTIVITY_KEY}-${userId}`, activity);
     }
   };
 
@@ -174,15 +255,18 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
           billing_cycle_days: action.data.billing_cycle_days,
           grace_period_days: action.data.grace_period_days,
           last_statement_date: action.data.last_statement_date,
-          next_due_date: action.data.next_due_date, // Use exact date from AI
+          next_due_date: action.data.next_due_date,
         });
         setExecutedActions(prev => new Set([...prev, actionKey]));
+        saveLastActivity(`you added "${action.data.name}" to your bills.`);
       } else if (action.action === "update" && action.type === "bill") {
         await updateBill({ name: action.name, data: action.data });
         setExecutedActions(prev => new Set([...prev, actionKey]));
+        saveLastActivity(`you updated "${action.name}".`);
       } else if (action.action === "delete" && action.type === "bill") {
         await deleteBill(action.name);
         setExecutedActions(prev => new Set([...prev, actionKey]));
+        saveLastActivity(`you deleted "${action.name}" from your bills.`);
       }
     } catch (e) {
       console.error("Failed to execute action:", e);
