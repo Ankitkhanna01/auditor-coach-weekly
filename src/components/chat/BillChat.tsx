@@ -116,6 +116,9 @@ export function BillChat() {
           due_day: action.data.due_day,
           amount: action.data.amount,
           frequency: action.data.frequency || "monthly",
+          billing_cycle_days: action.data.billing_cycle_days,
+          grace_period_days: action.data.grace_period_days,
+          last_statement_date: action.data.last_statement_date,
         });
         setExecutedActions(prev => new Set([...prev, actionKey]));
       } else if (action.action === "update" && action.type === "bill") {
@@ -144,18 +147,24 @@ export function BillChat() {
   const buildContext = () => {
     if (bills.length === 0) return "";
     
-    const frequencyLabels: Record<string, string> = {
-      weekly: 'every week',
-      biweekly: 'every 2 weeks',
-      monthly: 'each month',
-      yearly: 'each year',
-    };
-    
     const billsList = bills.map(b => {
       let desc = `- ${b.name} (${b.type})`;
       if (b.last_four_digits) desc += ` ending in ${b.last_four_digits}`;
-      const freq = b.frequency || 'monthly';
-      desc += `, due on the ${b.due_day}${getDaySuffix(b.due_day)} ${frequencyLabels[freq] || 'each month'}`;
+      
+      // Check if day-based bill (credit cards/loans with billing cycle info)
+      if (['credit_card', 'loan'].includes(b.type) && b.billing_cycle_days && b.last_statement_date) {
+        desc += `, ${b.billing_cycle_days}-day cycle, ${b.grace_period_days || 21}-day grace`;
+        desc += `, next due: ${b.next_due_date}`;
+      } else {
+        const frequencyLabels: Record<string, string> = {
+          weekly: 'every week',
+          biweekly: 'every 2 weeks',
+          monthly: 'each month',
+          yearly: 'each year',
+        };
+        const freq = b.frequency || 'monthly';
+        desc += `, due on the ${b.due_day}${getDaySuffix(b.due_day)} ${frequencyLabels[freq] || 'each month'}`;
+      }
       if (b.amount) desc += `, ~$${b.amount}`;
       return desc;
     }).join('\n');

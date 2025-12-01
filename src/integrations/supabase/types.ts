@@ -53,12 +53,15 @@ export type Database = {
       bills: {
         Row: {
           amount: number | null
+          billing_cycle_days: number | null
           created_at: string
           due_day: number
           frequency: string
+          grace_period_days: number | null
           id: string
           is_paid: boolean | null
           last_four_digits: string | null
+          last_statement_date: string | null
           name: string
           next_due_date: string
           reminder_sent: boolean | null
@@ -69,12 +72,15 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          billing_cycle_days?: number | null
           created_at?: string
           due_day: number
           frequency?: string
+          grace_period_days?: number | null
           id?: string
           is_paid?: boolean | null
           last_four_digits?: string | null
+          last_statement_date?: string | null
           name: string
           next_due_date: string
           reminder_sent?: boolean | null
@@ -85,12 +91,15 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          billing_cycle_days?: number | null
           created_at?: string
           due_day?: number
           frequency?: string
+          grace_period_days?: number | null
           id?: string
           is_paid?: boolean | null
           last_four_digits?: string | null
+          last_statement_date?: string | null
           name?: string
           next_due_date?: string
           reminder_sent?: boolean | null
