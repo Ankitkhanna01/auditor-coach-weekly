@@ -82,7 +82,8 @@ const Index = () => {
         return (
           <BillChat 
             contextMessage={contextMessage} 
-            onContextUsed={clearContextMessage} 
+            onContextUsed={clearContextMessage}
+            isActive={activeTab === "chat"}
           />
         );
       case "settings":
