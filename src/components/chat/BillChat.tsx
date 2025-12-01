@@ -13,6 +13,7 @@ interface Message {
 interface BillChatProps {
   contextMessage?: string | null;
   onContextUsed?: () => void;
+  isActive?: boolean;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bill-chat`;
@@ -21,6 +22,7 @@ const EXECUTED_KEY = 'bill-chat-executed';
 const CHAT_TIMESTAMP_KEY = 'bill-chat-timestamp';
 const LAST_VISIT_KEY = 'bill-chat-last-visit';
 const LAST_ACTIVITY_KEY = 'bill-chat-last-activity';
+const SESSION_GREETED_KEY = 'bill-chat-session-greeted';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -29,6 +31,14 @@ const getGreeting = () => {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
+};
+
+const getActionPrompt = (bills: any[]) => {
+  const greeting = getGreeting();
+  if (bills.length === 0) {
+    return `${greeting}! 👋 Ready to get started? Tell me about a bill you'd like to track - credit card, utility, subscription, or any recurring payment.`;
+  }
+  return `${greeting}! 👋 You're tracking ${bills.length} bill${bills.length > 1 ? 's' : ''}. What would you like to do?\n\n• Add a new bill\n• Update an existing bill\n• Delete a bill`;
 };
 
 const getWelcomeMessage = (lastVisit: number | null, lastActivity: string | null, bills: any[]) => {
@@ -82,13 +92,14 @@ const INITIAL_MESSAGE: Message = {
   content: `${getGreeting()}! 👋 What bills would you like to add or manage today?`
 };
 
-export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
+export function BillChat({ contextMessage, onContextUsed, isActive }: BillChatProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [executedActions, setExecutedActions] = useState<Set<string>>(new Set());
   const [contextProcessed, setContextProcessed] = useState(false);
+  const [sessionGreeted, setSessionGreeted] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +112,27 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
+
+  // Show fresh action prompt when chat becomes active (once per session)
+  useEffect(() => {
+    if (isActive && userId && !sessionGreeted && !contextMessage) {
+      // Check if already greeted this browser session
+      const alreadyGreeted = sessionStorage.getItem(`${SESSION_GREETED_KEY}-${userId}`);
+      if (!alreadyGreeted) {
+        const actionPrompt = getActionPrompt(bills);
+        setMessages(prev => {
+          // Only add if last message isn't already a fresh greeting
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.role === "assistant" && lastMsg.content.includes("What would you like to do")) {
+            return prev;
+          }
+          return [...prev, { role: "assistant", content: actionPrompt }];
+        });
+        sessionStorage.setItem(`${SESSION_GREETED_KEY}-${userId}`, "true");
+        setSessionGreeted(true);
+      }
+    }
+  }, [isActive, userId, sessionGreeted, contextMessage, bills.length]);
 
   // Load chat history and auto-delete if older than 7 days
   useEffect(() => {
