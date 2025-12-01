@@ -10,6 +10,11 @@ interface Message {
   content: string;
 }
 
+interface BillChatProps {
+  contextMessage?: string | null;
+  onContextUsed?: () => void;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bill-chat`;
 const STORAGE_KEY = 'bill-chat-messages';
 const EXECUTED_KEY = 'bill-chat-executed';
@@ -19,12 +24,13 @@ const INITIAL_MESSAGE: Message = {
   content: "Hey! 👋 I'm here to help you track your bills. Tell me about a bill you'd like to add - like a credit card, utility, or subscription. I'll make sure you get reminded 5 days before it's due!"
 };
 
-export function BillChat() {
+export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [executedActions, setExecutedActions] = useState<Set<string>>(new Set());
+  const [contextProcessed, setContextProcessed] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +71,27 @@ export function BillChat() {
       }
     }
   }, [userId]);
+
+  // Handle context message from bill click
+  useEffect(() => {
+    if (contextMessage && userId && !contextProcessed && !isLoading) {
+      setContextProcessed(true);
+      // Add a contextual assistant message asking what to change
+      const contextualMessage: Message = {
+        role: "assistant",
+        content: contextMessage
+      };
+      setMessages(prev => [...prev, contextualMessage]);
+      onContextUsed?.();
+    }
+  }, [contextMessage, userId, contextProcessed, isLoading, onContextUsed]);
+
+  // Reset context processed flag when context changes
+  useEffect(() => {
+    if (!contextMessage) {
+      setContextProcessed(false);
+    }
+  }, [contextMessage]);
 
   // Save chat history
   useEffect(() => {
@@ -166,6 +193,9 @@ export function BillChat() {
         desc += `, due on the ${b.due_day}${getDaySuffix(b.due_day)} ${frequencyLabels[freq] || 'each month'}`;
       }
       if (b.amount) desc += `, ~$${b.amount}`;
+      if (b.is_paid && b.paid_at) {
+        desc += ` [PAID on ${new Date(b.paid_at).toLocaleDateString()}]`;
+      }
       return desc;
     }).join('\n');
     

@@ -140,6 +140,7 @@ export interface Bill {
   last_statement_date: string | null;
   reminder_sent: boolean;
   is_paid: boolean;
+  paid_at: string | null;
   snoozed_until: string | null;
   created_at: string;
   updated_at: string;
@@ -445,6 +446,7 @@ export function useBills() {
         .from('bills')
         .update({ 
           is_paid: true,
+          paid_at: new Date().toISOString(),
           next_due_date: nextDueDate,
           last_statement_date: newStatementDate,
           snoozed_until: null,

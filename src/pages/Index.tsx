@@ -8,7 +8,8 @@ import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 import { SharePrompt } from "@/components/onboarding/SharePrompt";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useAuth } from "@/hooks/useAuth";
-import { useBills } from "@/hooks/useBills";
+import { useBills, Bill } from "@/hooks/useBills";
+import { format } from "date-fns";
 
 const tabs = [
   { id: "dashboard", icon: Home, label: "Home" },
@@ -18,6 +19,7 @@ const tabs = [
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [contextMessage, setContextMessage] = useState<string | null>(null);
   const { user } = useAuth();
   const { bills } = useBills();
   
@@ -38,16 +40,37 @@ const Index = () => {
     }
   }, [bills?.length, checkSharePrompt]);
 
+  // Handle bill click - switch to chat with context
+  const handleBillClick = (bill: Bill) => {
+    const paidDate = bill.paid_at ? format(new Date(bill.paid_at), "MMMM d, yyyy") : "recently";
+    const nextDue = format(new Date(bill.next_due_date), "MMMM d, yyyy");
+    
+    const message = `I want to update my ${bill.name} bill. I marked it as paid on ${paidDate}. The next due date is ${nextDue}. What would you like to change?`;
+    
+    setContextMessage(message);
+    setActiveTab("chat");
+  };
+
+  // Clear context message after it's been used
+  const clearContextMessage = () => {
+    setContextMessage(null);
+  };
+
   const renderScreen = () => {
     switch (activeTab) {
       case "dashboard":
-        return <BillDashboard />;
+        return <BillDashboard onBillClick={handleBillClick} />;
       case "chat":
-        return <BillChat />;
+        return (
+          <BillChat 
+            contextMessage={contextMessage} 
+            onContextUsed={clearContextMessage} 
+          />
+        );
       case "settings":
         return <Settings onShareClick={triggerSharePrompt} />;
       default:
-        return <BillDashboard />;
+        return <BillDashboard onBillClick={handleBillClick} />;
     }
   };
 

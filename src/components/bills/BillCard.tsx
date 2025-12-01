@@ -51,9 +51,10 @@ interface BillCardProps {
   bill: Bill;
   onMarkPaid: (billId: string) => Promise<void>;
   onSnooze: (billId: string, snoozeUntil: Date) => Promise<void>;
+  onBillClick?: (bill: Bill) => void;
 }
 
-export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
+export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -117,6 +118,13 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
       setCustomDate(undefined);
     }
   };
+
+  const handlePaidClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPaid && onBillClick) {
+      onBillClick(bill);
+    }
+  };
   
   return (
     <>
@@ -166,9 +174,22 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {isPaid ? (
-                <span className="text-primary">Paid ✓</span>
+                <div 
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={handlePaidClick}
+                >
+                  <span className="text-primary">Paid ✓</span>
+                  {bill.paid_at && (
+                    <span className="ml-1 text-xs">
+                      on {format(new Date(bill.paid_at), "MMM d")}
+                    </span>
+                  )}
+                  <div className="text-xs text-muted-foreground/70">
+                    Next due: {format(new Date(bill.next_due_date), "MMM d, yyyy")}
+                  </div>
+                </div>
               ) : isSnoozed ? (
                 <span className="text-muted-foreground">
                   Snoozed until {new Date(bill.snoozed_until!).toLocaleDateString('en-US', {
@@ -194,7 +215,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
                   )}
                 </>
               )}
-            </p>
+            </div>
           </div>
 
           {/* Days Until / Expand */}
@@ -252,9 +273,14 @@ export function BillCard({ bill, onMarkPaid, onSnooze }: BillCardProps) {
               </Button>
             )}
             {isPaid && (
-              <p className="text-sm text-muted-foreground text-center w-full">
-                This bill is marked as paid for this cycle
-              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => onBillClick?.(bill)}
+              >
+                Edit Payment
+              </Button>
             )}
           </div>
         )}

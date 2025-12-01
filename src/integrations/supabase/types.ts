@@ -64,6 +64,7 @@ export type Database = {
           last_statement_date: string | null
           name: string
           next_due_date: string
+          paid_at: string | null
           reminder_sent: boolean | null
           snoozed_until: string | null
           type: string
@@ -83,6 +84,7 @@ export type Database = {
           last_statement_date?: string | null
           name: string
           next_due_date: string
+          paid_at?: string | null
           reminder_sent?: boolean | null
           snoozed_until?: string | null
           type?: string
@@ -102,6 +104,7 @@ export type Database = {
           last_statement_date?: string | null
           name?: string
           next_due_date?: string
+          paid_at?: string | null
           reminder_sent?: boolean | null
           snoozed_until?: string | null
           type?: string
