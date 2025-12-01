@@ -7,7 +7,8 @@ import { User } from "@supabase/supabase-js";
 export type BillFrequency = 'weekly' | 'biweekly' | 'monthly' | 'yearly';
 
 // Calculate next due date for DAY-BASED billing (credit cards, loans)
-// Uses: last_statement_date + billing_cycle_days + grace_period_days
+// Due date = last_statement_date + grace_period_days
+// (billing_cycle_days is only used to calculate the NEXT statement date)
 function calculateDayBasedDueDate(
   lastStatementDate: string,
   billingCycleDays: number,
@@ -16,9 +17,10 @@ function calculateDayBasedDueDate(
   const statementDate = new Date(lastStatementDate);
   statementDate.setHours(0, 0, 0, 0);
   
-  // Next due date = statement date + billing cycle + grace period
+  // Next due date = statement close date + grace period
+  // billing_cycle_days is NOT added here - it's for statement-to-statement calculation
   const dueDate = new Date(statementDate);
-  dueDate.setDate(dueDate.getDate() + billingCycleDays + gracePeriodDays);
+  dueDate.setDate(dueDate.getDate() + gracePeriodDays);
   
   return dueDate.toISOString().split('T')[0];
 }
