@@ -47,14 +47,20 @@ const Index = () => {
     
     if (bill.is_paid) {
       const paidDate = bill.paid_at ? format(new Date(bill.paid_at), "MMMM d, yyyy") : "recently";
-      message = `You selected "${bill.name}" which was paid on ${paidDate}. Next due: ${nextDue}. What would you like to do? You can:\n• Change the payment date\n• Update the next due date\n• Edit bill details\n• Delete this bill`;
+      message = `You selected "${bill.name}" which was paid on ${paidDate}. Next due: ${nextDue}. What would you like to do?\n• Change the payment date\n• Update the next due date\n• Edit bill details\n• Delete this bill`;
     } else {
       const daysText = getDaysUntilDue(bill.next_due_date);
       const urgency = daysText <= 3 ? " (due very soon!)" : daysText <= 7 ? " (due soon)" : "";
-      message = `You selected "${bill.name}" due on ${nextDue}${urgency}. What would you like to do? You can:\n• Mark it as paid\n• Snooze reminders\n• Edit bill details\n• Delete this bill`;
+      message = `You selected "${bill.name}" due on ${nextDue}${urgency}. What would you like to do?\n• Mark it as paid\n• Snooze reminders\n• Edit bill details\n• Delete this bill`;
     }
     
     setContextMessage(message);
+    setActiveTab("chat");
+  };
+
+  // Handle general context chat - for non-bill elements
+  const handleContextChat = (context: string) => {
+    setContextMessage(context);
     setActiveTab("chat");
   };
 
@@ -66,7 +72,12 @@ const Index = () => {
   const renderScreen = () => {
     switch (activeTab) {
       case "dashboard":
-        return <BillDashboard onBillClick={handleBillClick} />;
+        return (
+          <BillDashboard 
+            onBillClick={handleBillClick} 
+            onContextChat={handleContextChat}
+          />
+        );
       case "chat":
         return (
           <BillChat 
@@ -77,7 +88,12 @@ const Index = () => {
       case "settings":
         return <Settings onShareClick={triggerSharePrompt} />;
       default:
-        return <BillDashboard onBillClick={handleBillClick} />;
+        return (
+          <BillDashboard 
+            onBillClick={handleBillClick}
+            onContextChat={handleContextChat}
+          />
+        );
     }
   };
 
