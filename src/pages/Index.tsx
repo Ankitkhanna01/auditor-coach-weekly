@@ -8,7 +8,7 @@ import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 import { SharePrompt } from "@/components/onboarding/SharePrompt";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useAuth } from "@/hooks/useAuth";
-import { useBills, Bill } from "@/hooks/useBills";
+import { useBills, Bill, getDaysUntilDue } from "@/hooks/useBills";
 import { format } from "date-fns";
 
 const tabs = [
@@ -42,10 +42,17 @@ const Index = () => {
 
   // Handle bill click - switch to chat with context
   const handleBillClick = (bill: Bill) => {
-    const paidDate = bill.paid_at ? format(new Date(bill.paid_at), "MMMM d, yyyy") : "recently";
     const nextDue = format(new Date(bill.next_due_date), "MMMM d, yyyy");
+    let message: string;
     
-    const message = `I want to update my ${bill.name} bill. I marked it as paid on ${paidDate}. The next due date is ${nextDue}. What would you like to change?`;
+    if (bill.is_paid) {
+      const paidDate = bill.paid_at ? format(new Date(bill.paid_at), "MMMM d, yyyy") : "recently";
+      message = `You selected "${bill.name}" which was paid on ${paidDate}. Next due: ${nextDue}. What would you like to do? You can:\n• Change the payment date\n• Update the next due date\n• Edit bill details\n• Delete this bill`;
+    } else {
+      const daysText = getDaysUntilDue(bill.next_due_date);
+      const urgency = daysText <= 3 ? " (due very soon!)" : daysText <= 7 ? " (due soon)" : "";
+      message = `You selected "${bill.name}" due on ${nextDue}${urgency}. What would you like to do? You can:\n• Mark it as paid\n• Snooze reminders\n• Edit bill details\n• Delete this bill`;
+    }
     
     setContextMessage(message);
     setActiveTab("chat");

@@ -45,7 +45,7 @@ export function BillDashboard({ onBillClick }: BillDashboardProps) {
   });
 
   const handleTableRowClick = (bill: Bill) => {
-    if (bill.is_paid && onBillClick) {
+    if (onBillClick) {
       onBillClick(bill);
     }
   };
@@ -149,7 +149,7 @@ export function BillDashboard({ onBillClick }: BillDashboardProps) {
                   return (
                     <TableRow 
                       key={bill.id} 
-                      className={`border-border/30 ${bill.is_paid ? 'cursor-pointer hover:bg-muted/30' : ''}`}
+                      className="border-border/30 cursor-pointer hover:bg-muted/30"
                       onClick={() => handleTableRowClick(bill)}
                     >
                       <TableCell className="font-medium">
@@ -213,9 +213,9 @@ export function BillDashboard({ onBillClick }: BillDashboardProps) {
         <div className="flex items-start gap-3">
           <Bell className="w-5 h-5 text-primary mt-0.5" />
           <div>
-            <p className="font-medium text-sm">Smart Reminders</p>
+            <p className="font-medium text-sm">Tap Any Bill</p>
             <p className="text-xs text-muted-foreground">
-              Tap a paid bill to edit payment details via chat
+              Click on any bill to chat with AI about it
             </p>
           </div>
         </div>
