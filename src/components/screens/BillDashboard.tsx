@@ -5,21 +5,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { BillCard } from "@/components/bills/BillCard";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
-import { Receipt, AlertTriangle, ChevronDown, ChevronUp, Sparkles, MessageSquare } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Receipt, AlertTriangle, Sparkles, MessageSquare } from "lucide-react";
 
 interface BillDashboardProps {
   onBillClick?: (bill: Bill) => void;
@@ -30,7 +16,6 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
   const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackContext, setFeedbackContext] = useState("");
-  const [scheduleOpen, setScheduleOpen] = useState(false);
   
   // Initialize notifications
   useNotifications(bills);
@@ -54,12 +39,6 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
     if (bill.snoozed_until && new Date(bill.snoozed_until) > new Date()) return false;
     return shouldShowReminder(bill.next_due_date);
   });
-
-  const handleTableRowClick = (bill: Bill) => {
-    if (onBillClick) {
-      onBillClick(bill);
-    }
-  };
 
   const handleContextClick = (context: string) => {
     if (onContextChat) {
@@ -146,96 +125,17 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
             </div>
           </GlassCard>
         ) : (
-          <>
-            {/* Bill Cards */}
-            <div className="space-y-2">
-              {sortedBills.map((bill) => (
-                <BillCard
-                  key={bill.id}
-                  bill={bill}
-                  onMarkPaid={markAsPaid}
-                  onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
-                  onBillClick={onBillClick}
-                />
-              ))}
-            </div>
-
-            {/* Schedule Dropdown */}
-            <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors text-sm">
-                  <span className="font-medium text-muted-foreground">View Full Schedule</span>
-                  {scheduleOpen ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <GlassCard className="p-0 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border/50 hover:bg-transparent">
-                        <TableHead className="text-muted-foreground text-xs">Bill</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Due</TableHead>
-                        <TableHead className="text-muted-foreground text-xs text-right">Cycle</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedBills.map((bill) => {
-                        const daysUntil = getDaysUntilDue(bill.next_due_date);
-                        return (
-                          <TableRow 
-                            key={bill.id} 
-                            className="border-border/30 cursor-pointer hover:bg-muted/30"
-                            onClick={() => handleTableRowClick(bill)}
-                          >
-                            <TableCell className="py-2">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="font-medium text-sm flex items-center gap-1.5">
-                                  {bill.name}
-                                  {bill.last_four_digits && (
-                                    <span className="text-[10px] font-normal bg-muted/50 px-1 py-0.5 rounded">
-                                      {bill.last_four_digits}
-                                    </span>
-                                  )}
-                                </span>
-                                {bill.paid_at && (
-                                  <span className="text-[10px] text-primary">
-                                    Paid {format(new Date(bill.paid_at), "MMM d")}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-2">
-                              <div className="flex flex-col">
-                                <span className={`text-sm ${
-                                  daysUntil <= 3 ? "text-destructive font-medium" :
-                                  daysUntil <= 7 ? "text-warning" : ""
-                                }`}>
-                                  {format(new Date(bill.next_due_date), "MMM d")}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  {daysUntil === 0 ? "Today" :
-                                   daysUntil === 1 ? "Tomorrow" :
-                                   daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` :
-                                   `${daysUntil}d`}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right capitalize text-muted-foreground text-xs py-2">
-                              {bill.frequency || 'monthly'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </GlassCard>
-              </CollapsibleContent>
-            </Collapsible>
-          </>
+          <div className="space-y-2">
+            {sortedBills.map((bill) => (
+              <BillCard
+                key={bill.id}
+                bill={bill}
+                onMarkPaid={markAsPaid}
+                onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
+                onBillClick={onBillClick}
+              />
+            ))}
+          </div>
         )}
       </div>
 

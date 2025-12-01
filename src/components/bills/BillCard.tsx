@@ -227,37 +227,77 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
           </div>
         </div>
 
-        {/* Expanded Actions */}
+        {/* Expanded Details & Actions */}
         {expanded && (
-          <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              className="flex-1 gap-2"
-              onClick={handleMarkPaid}
-              disabled={isLoading}
-            >
-              <Check className="w-4 h-4" />
-              Mark Paid
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 gap-2"
-              onClick={() => setSnoozeOpen(true)}
-              disabled={isLoading}
-            >
-              <Clock className="w-4 h-4" />
-              Snooze
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground"
-              onClick={() => onBillClick?.(bill)}
-            >
-              Ask AI
-            </Button>
+          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+            {/* Schedule Details */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-2 rounded-lg bg-muted/30">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Next Due</p>
+                <p className="text-sm font-medium">
+                  {format(new Date(bill.next_due_date), "MMM d")}
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-muted/30">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Last Due</p>
+                <p className="text-sm font-medium">
+                  {bill.frequency === 'monthly' 
+                    ? format(new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)), "MMM d")
+                    : bill.frequency === 'weekly'
+                    ? format(new Date(new Date(bill.next_due_date).setDate(new Date(bill.next_due_date).getDate() - 7)), "MMM d")
+                    : bill.frequency === 'biweekly'
+                    ? format(new Date(new Date(bill.next_due_date).setDate(new Date(bill.next_due_date).getDate() - 14)), "MMM d")
+                    : bill.frequency === 'yearly'
+                    ? format(new Date(new Date(bill.next_due_date).setFullYear(new Date(bill.next_due_date).getFullYear() - 1)), "MMM d")
+                    : format(new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)), "MMM d")
+                  }
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-muted/30">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cycle</p>
+                <p className="text-sm font-medium capitalize">{bill.frequency || 'monthly'}</p>
+              </div>
+            </div>
+            
+            {bill.paid_at && (
+              <div className="text-center p-2 rounded-lg bg-primary/10">
+                <p className="text-xs text-primary">
+                  Last paid on {format(new Date(bill.paid_at), "MMM d, yyyy")}
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={handleMarkPaid}
+                disabled={isLoading}
+              >
+                <Check className="w-4 h-4" />
+                Mark Paid
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => setSnoozeOpen(true)}
+                disabled={isLoading}
+              >
+                <Clock className="w-4 h-4" />
+                Snooze
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground"
+                onClick={() => onBillClick?.(bill)}
+              >
+                Ask AI
+              </Button>
+            </div>
           </div>
         )}
       </GlassCard>
