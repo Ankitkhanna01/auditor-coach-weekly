@@ -1,4 +1,4 @@
-import { useBills, getDaysUntilDue, shouldShowReminder } from "@/hooks/useBills";
+import { useBills, getDaysUntilDue, shouldShowReminder, Bill } from "@/hooks/useBills";
 import { useNotifications } from "@/hooks/useNotifications";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 
-export function BillDashboard() {
+interface BillDashboardProps {
+  onBillClick?: (bill: Bill) => void;
+}
+
+export function BillDashboard({ onBillClick }: BillDashboardProps) {
   const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
   
   // Initialize notifications - this will check and send notifications when bills load
@@ -39,6 +43,12 @@ export function BillDashboard() {
     if (bill.snoozed_until && new Date(bill.snoozed_until) > new Date()) return false;
     return shouldShowReminder(bill.next_due_date);
   });
+
+  const handleTableRowClick = (bill: Bill) => {
+    if (bill.is_paid && onBillClick) {
+      onBillClick(bill);
+    }
+  };
 
   return (
     <div className="space-y-6 stagger-children">
@@ -110,6 +120,7 @@ export function BillDashboard() {
               bill={bill}
               onMarkPaid={markAsPaid}
               onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
+              onBillClick={onBillClick}
             />
           ))
         )}
@@ -136,7 +147,11 @@ export function BillDashboard() {
                 {sortedBills.map((bill) => {
                   const daysUntil = getDaysUntilDue(bill.next_due_date);
                   return (
-                    <TableRow key={bill.id} className="border-border/30">
+                    <TableRow 
+                      key={bill.id} 
+                      className={`border-border/30 ${bill.is_paid ? 'cursor-pointer hover:bg-muted/30' : ''}`}
+                      onClick={() => handleTableRowClick(bill)}
+                    >
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
                           <span className={bill.is_paid ? "line-through text-muted-foreground" : ""}>
@@ -156,9 +171,22 @@ export function BillDashboard() {
                             daysUntil <= 3 ? "text-destructive font-medium" :
                             daysUntil <= 7 ? "text-warning" : ""
                           }>
-                            {bill.is_paid ? "Paid ✓" : format(new Date(bill.next_due_date), "MMM d, yyyy")}
+                            {bill.is_paid ? (
+                              <>
+                                Paid ✓
+                                {bill.paid_at && (
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    on {format(new Date(bill.paid_at), "MMM d")}
+                                  </span>
+                                )}
+                              </>
+                            ) : format(new Date(bill.next_due_date), "MMM d, yyyy")}
                           </span>
-                          {!bill.is_paid && (
+                          {bill.is_paid ? (
+                            <span className="text-xs text-muted-foreground">
+                              Next: {format(new Date(bill.next_due_date), "MMM d, yyyy")}
+                            </span>
+                          ) : (
                             <span className="text-xs text-muted-foreground">
                               {daysUntil === 0 ? "Today" :
                                daysUntil === 1 ? "Tomorrow" :
@@ -187,7 +215,7 @@ export function BillDashboard() {
           <div>
             <p className="font-medium text-sm">Smart Reminders</p>
             <p className="text-xs text-muted-foreground">
-              Tap a bill to mark as paid or snooze notifications
+              Tap a paid bill to edit payment details via chat
             </p>
           </div>
         </div>
