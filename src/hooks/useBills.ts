@@ -416,7 +416,7 @@ export function useBills() {
   });
 
   /**
-   * Mark bill as paid - advances to the next FUTURE due date (skips all past dates)
+   * Mark bill as paid - advances to the next billing cycle from current due date
    */
   const markAsPaidMutation = useMutation({
     mutationFn: async (billId: string) => {
@@ -425,14 +425,10 @@ export function useBills() {
       const bill = bills.find(b => b.id === billId);
       if (!bill) throw new Error('Bill not found');
       
-      // Calculate the next FUTURE due date (not just one cycle ahead)
-      // This handles cases where user entered old statement dates
+      // Always advance by one full billing cycle from the CURRENT next_due_date
+      // This ensures marking as paid always moves to the next cycle
       const frequency = (bill.frequency || 'monthly') as BillFrequency;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // Use calculateNextDueDate which always returns a future date
-      const nextDueDate = calculateNextDueDate(bill.due_day, frequency, today);
+      const nextDueDate = advanceDueDate(bill.next_due_date, frequency);
       
       const { error } = await supabase
         .from('bills')
