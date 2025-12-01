@@ -202,13 +202,18 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
                       onClick={() => handleTableRowClick(bill)}
                     >
                       <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <span className={bill.is_paid ? "line-through text-muted-foreground" : ""}>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="flex items-center gap-2">
                             {bill.name}
+                            {bill.last_four_digits && (
+                              <span className="text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
+                                {bill.last_four_digits}
+                              </span>
+                            )}
                           </span>
-                          {bill.last_four_digits && (
-                            <span className="text-xs text-muted-foreground">
-                              •••• {bill.last_four_digits}
+                          {bill.paid_at && (
+                            <span className="text-xs text-primary">
+                              Paid {format(new Date(bill.paid_at), "MMM d")}
                             </span>
                           )}
                         </div>
@@ -216,33 +221,17 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
                       <TableCell>
                         <div className="flex flex-col">
                           <span className={
-                            bill.is_paid ? "text-primary" :
                             daysUntil <= 3 ? "text-destructive font-medium" :
                             daysUntil <= 7 ? "text-warning" : ""
                           }>
-                            {bill.is_paid ? (
-                              <>
-                                Paid ✓
-                                {bill.paid_at && (
-                                  <span className="text-xs text-muted-foreground ml-1">
-                                    on {format(new Date(bill.paid_at), "MMM d")}
-                                  </span>
-                                )}
-                              </>
-                            ) : format(new Date(bill.next_due_date), "MMM d, yyyy")}
+                            {format(new Date(bill.next_due_date), "MMM d, yyyy")}
                           </span>
-                          {bill.is_paid ? (
-                            <span className="text-xs text-muted-foreground">
-                              Next: {format(new Date(bill.next_due_date), "MMM d, yyyy")}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              {daysUntil === 0 ? "Today" :
-                               daysUntil === 1 ? "Tomorrow" :
-                               daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` :
-                               `in ${daysUntil} days`}
-                            </span>
-                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {daysUntil === 0 ? "Today" :
+                             daysUntil === 1 ? "Tomorrow" :
+                             daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` :
+                             `in ${daysUntil} days`}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right capitalize text-muted-foreground">

@@ -66,7 +66,6 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
   const colorClass = typeColors[bill.type] || typeColors.other;
   const daysUntil = getDaysUntilDue(bill.next_due_date);
   const isUrgent = shouldShowReminder(bill.next_due_date);
-  const isPaid = bill.is_paid;
   const isSnoozed = bill.snoozed_until && new Date(bill.snoozed_until) > new Date();
   
   const handleMarkPaid = async () => {
@@ -131,8 +130,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
       <GlassCard
         className={cn(
           "p-4 transition-all duration-200",
-          isUrgent && !isPaid && !isSnoozed && "border-warning/30 pulse-neon",
-          isPaid && "opacity-60 border-primary/30",
+          isUrgent && !isSnoozed && "border-warning/30 pulse-neon",
           isSnoozed && "opacity-75 border-muted/30"
         )}
       >
@@ -143,16 +141,10 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
           {/* Icon */}
           <div className={cn(
             "p-3 rounded-xl bg-gradient-to-br relative",
-            colorClass,
-            isPaid && "opacity-50"
+            colorClass
           )}>
             <Icon className="w-5 h-5 text-white" />
-            {isPaid && (
-              <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5">
-                <Check className="w-3 h-3 text-white" />
-              </div>
-            )}
-            {isSnoozed && !isPaid && (
+            {isSnoozed && (
               <div className="absolute -top-1 -right-1 bg-muted rounded-full p-0.5">
                 <Clock className="w-3 h-3 text-muted-foreground" />
               </div>
@@ -162,15 +154,12 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
           {/* Bill Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className={cn(
-                "font-semibold truncate",
-                isPaid && "line-through text-muted-foreground"
-              )}>
+              <p className="font-semibold truncate">
                 {bill.name}
               </p>
               {bill.last_four_digits && (
-                <span className="text-xs text-muted-foreground">
-                  •••• {bill.last_four_digits}
+                <span className="text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
+                  {bill.last_four_digits}
                 </span>
               )}
             </div>
@@ -178,19 +167,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               className="text-sm text-muted-foreground cursor-pointer hover:opacity-80"
               onClick={handleBillInfoClick}
             >
-              {isPaid ? (
-                <>
-                  <span className="text-primary">Paid ✓</span>
-                  {bill.paid_at && (
-                    <span className="ml-1 text-xs">
-                      on {format(new Date(bill.paid_at), "MMM d")}
-                    </span>
-                  )}
-                  <div className="text-xs text-muted-foreground/70">
-                    Next due: {format(new Date(bill.next_due_date), "MMM d, yyyy")}
-                  </div>
-                </>
-              ) : isSnoozed ? (
+              {isSnoozed ? (
                 <span className="text-muted-foreground">
                   Snoozed until {new Date(bill.snoozed_until!).toLocaleDateString('en-US', {
                     month: 'short',
@@ -213,6 +190,11 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
                       · ~${bill.amount.toLocaleString()}
                     </span>
                   )}
+                  {bill.paid_at && (
+                    <div className="text-xs text-primary mt-0.5">
+                      Paid {format(new Date(bill.paid_at), "MMM d")}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -220,7 +202,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
 
           {/* Days Until / Expand */}
           <div className="text-right flex items-center gap-2">
-            {!isPaid && !isSnoozed && (
+            {!isSnoozed && (
               <div>
                 {isUrgent && (
                   <Bell className="w-4 h-4 text-warning mb-1 ml-auto animate-pulse" />
@@ -248,50 +230,34 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
         {/* Expanded Actions */}
         {expanded && (
           <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
-            {!isPaid && (
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-1 gap-2"
-                onClick={handleMarkPaid}
-                disabled={isLoading}
-              >
-                <Check className="w-4 h-4" />
-                Mark Paid
-              </Button>
-            )}
-            {!isPaid && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-2"
-                onClick={() => setSnoozeOpen(true)}
-                disabled={isLoading}
-              >
-                <Clock className="w-4 h-4" />
-                Snooze
-              </Button>
-            )}
-            {isPaid && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-2"
-                onClick={() => onBillClick?.(bill)}
-              >
-                Edit via Chat
-              </Button>
-            )}
-            {!isPaid && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-                onClick={() => onBillClick?.(bill)}
-              >
-                Ask AI
-              </Button>
-            )}
+            <Button
+              variant="default"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={handleMarkPaid}
+              disabled={isLoading}
+            >
+              <Check className="w-4 h-4" />
+              Mark Paid
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => setSnoozeOpen(true)}
+              disabled={isLoading}
+            >
+              <Clock className="w-4 h-4" />
+              Snooze
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={() => onBillClick?.(bill)}
+            >
+              Ask AI
+            </Button>
           </div>
         )}
       </GlassCard>

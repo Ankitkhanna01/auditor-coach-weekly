@@ -416,9 +416,7 @@ export function useBills() {
   });
 
   /**
-   * Mark bill as paid - DOES NOT change due date immediately.
-   * The due date stays the same until the billing cycle naturally passes,
-   * then auto-reset advances it to the next month.
+   * Mark bill as paid - immediately advances to next due date
    */
   const markAsPaidMutation = useMutation({
     mutationFn: async (billId: string) => {
@@ -427,13 +425,16 @@ export function useBills() {
       const bill = bills.find(b => b.id === billId);
       if (!bill) throw new Error('Bill not found');
       
-      // Just mark as paid - don't change the due date
-      // The auto-reset logic will advance the date when the due date passes
+      // Calculate the next due date immediately
+      const frequency = (bill.frequency || 'monthly') as BillFrequency;
+      const nextDueDate = advanceDueDate(bill.next_due_date, frequency);
+      
       const { error } = await supabase
         .from('bills')
         .update({ 
-          is_paid: true,
+          is_paid: false, // Reset to unpaid for next cycle
           paid_at: new Date().toISOString(),
+          next_due_date: nextDueDate,
           snoozed_until: null,
           reminder_sent: false
         })
@@ -445,8 +446,8 @@ export function useBills() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       toast({
-        title: "Bill marked as paid",
-        description: "Reminders paused. Next due date will update after current cycle ends.",
+        title: "Paid!",
+        description: "Next due date updated.",
       });
     },
     onError: (error) => {
