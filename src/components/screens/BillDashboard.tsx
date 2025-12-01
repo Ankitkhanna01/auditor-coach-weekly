@@ -5,7 +5,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { BillCard } from "@/components/bills/BillCard";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
-import { Receipt, Bell, Calendar, AlertTriangle, List, Sparkles, MessageSquare } from "lucide-react";
+import { Receipt, AlertTriangle, ChevronDown, ChevronUp, Sparkles, MessageSquare } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface BillDashboardProps {
   onBillClick?: (bill: Bill) => void;
@@ -25,8 +30,9 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
   const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackContext, setFeedbackContext] = useState("");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   
-  // Initialize notifications - this will check and send notifications when bills load
+  // Initialize notifications
   useNotifications(bills);
 
   if (isLoading) {
@@ -67,225 +73,177 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
   };
 
   return (
-    <div className="space-y-6 stagger-children">
-      {/* Header - Feedback only (not AI changeable) */}
-      <div className="space-y-1">
-        <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => handleFeedbackClick("App title: 'Bill Reminders'")}
-        >
-          <h1 className="text-2xl font-bold gradient-text">Bill Reminders</h1>
-          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+    <div className="space-y-5 stagger-children">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold gradient-text">Bill Reminders</h1>
+          <p className="text-xs text-muted-foreground">
+            {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
+          </p>
         </div>
-        <p 
-          className="text-sm text-muted-foreground cursor-pointer hover:opacity-80"
-          onClick={() => handleFeedbackClick("App tagline: 'Never miss a payment again'")}
+        <button
+          onClick={() => handleFeedbackClick("General app feedback")}
+          className="p-2 rounded-full bg-muted/30 hover:bg-muted/50 transition-colors"
+          aria-label="Send feedback"
         >
-          Never miss a payment again
-        </p>
+          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+        </button>
       </div>
 
-      {/* Notification Permission Prompt */}
+      {/* Notification Permission */}
       <NotificationPermission />
 
-      {/* Urgent Bills Alert - AI clickable */}
+      {/* Urgent Alert - Only show if bills need attention */}
       {urgentBills.length > 0 && (
         <GlassCard 
-          className="p-4 border-warning/30 bg-warning/5 cursor-pointer hover:opacity-80 transition-opacity"
+          className="p-3 border-warning/30 bg-warning/5 cursor-pointer"
           onClick={() => handleContextClick(`You have ${urgentBills.length} urgent bill${urgentBills.length > 1 ? 's' : ''}: ${urgentBills.map(b => b.name).join(', ')}. What would you like to do?\n• Update bill details\n• Delete a bill`)}
         >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-warning/20">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+              <AlertTriangle className="w-4 h-4 text-warning" />
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-warning">
-                {urgentBills.length} bill{urgentBills.length > 1 ? 's' : ''} due soon!
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm text-warning">
+                {urgentBills.length} bill{urgentBills.length > 1 ? 's' : ''} due soon
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground truncate">
                 {urgentBills.map(b => b.name).join(', ')}
               </p>
             </div>
-            <Sparkles className="w-4 h-4 text-warning/50" />
           </div>
         </GlassCard>
       )}
 
-      {/* Summary Card - AI clickable */}
-      <GlassCard 
-        className="p-5 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleContextClick(`You're tracking ${bills.length} bill${bills.length !== 1 ? 's' : ''}. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill`)}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Bills Tracked</p>
-            <p className="text-3xl font-bold gradient-text">{bills.length}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20">
-            <Calendar className="w-6 h-6 text-primary" />
-          </div>
-        </div>
-        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-          <Sparkles className="w-3 h-3" />
-          <span>Tap to chat</span>
-        </div>
-      </GlassCard>
-
-      {/* Bills List */}
+      {/* Bills Section */}
       <div className="space-y-3">
-        <h2 
-          className="text-lg font-semibold cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center gap-2"
-          onClick={() => handleContextClick("You tapped on 'Upcoming Bills'. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill")}
-        >
-          Upcoming Bills
-          <Sparkles className="w-3 h-3 text-muted-foreground" />
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 
+            className="text-base font-semibold cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center gap-2"
+            onClick={() => handleContextClick("You tapped on 'Upcoming Bills'. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill")}
+          >
+            Upcoming Bills
+            <Sparkles className="w-3 h-3 text-muted-foreground" />
+          </h2>
+        </div>
         
         {bills.length === 0 ? (
           <GlassCard 
-            className="p-8 text-center cursor-pointer hover:opacity-80 transition-opacity"
+            className="p-6 text-center cursor-pointer"
             onClick={() => handleContextClick("You don't have any bills yet. Would you like me to help you add your first bill? Just tell me about it!")}
           >
-            <div className="flex flex-col items-center gap-3">
-              <div className="p-4 rounded-full bg-muted/30">
-                <Receipt className="w-8 h-8 text-muted-foreground" />
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-3 rounded-full bg-muted/30">
+                <Receipt className="w-6 h-6 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium">No bills yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Tap here to add your first bill
+                <p className="font-medium text-sm">No bills yet</p>
+                <p className="text-xs text-muted-foreground">
+                  Tap to add your first bill
                 </p>
               </div>
             </div>
           </GlassCard>
         ) : (
-          sortedBills.map((bill) => (
-            <BillCard
-              key={bill.id}
-              bill={bill}
-              onMarkPaid={markAsPaid}
-              onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
-              onBillClick={onBillClick}
-            />
-          ))
+          <>
+            {/* Bill Cards */}
+            <div className="space-y-2">
+              {sortedBills.map((bill) => (
+                <BillCard
+                  key={bill.id}
+                  bill={bill}
+                  onMarkPaid={markAsPaid}
+                  onSnooze={(billId, snoozeUntil) => snoozeBill({ billId, snoozeUntil })}
+                  onBillClick={onBillClick}
+                />
+              ))}
+            </div>
+
+            {/* Schedule Dropdown */}
+            <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors text-sm">
+                  <span className="font-medium text-muted-foreground">View Full Schedule</span>
+                  {scheduleOpen ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <GlassCard className="p-0 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground text-xs">Bill</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Due</TableHead>
+                        <TableHead className="text-muted-foreground text-xs text-right">Cycle</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedBills.map((bill) => {
+                        const daysUntil = getDaysUntilDue(bill.next_due_date);
+                        return (
+                          <TableRow 
+                            key={bill.id} 
+                            className="border-border/30 cursor-pointer hover:bg-muted/30"
+                            onClick={() => handleTableRowClick(bill)}
+                          >
+                            <TableCell className="py-2">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-medium text-sm flex items-center gap-1.5">
+                                  {bill.name}
+                                  {bill.last_four_digits && (
+                                    <span className="text-[10px] font-normal bg-muted/50 px-1 py-0.5 rounded">
+                                      {bill.last_four_digits}
+                                    </span>
+                                  )}
+                                </span>
+                                {bill.paid_at && (
+                                  <span className="text-[10px] text-primary">
+                                    Paid {format(new Date(bill.paid_at), "MMM d")}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <div className="flex flex-col">
+                                <span className={`text-sm ${
+                                  daysUntil <= 3 ? "text-destructive font-medium" :
+                                  daysUntil <= 7 ? "text-warning" : ""
+                                }`}>
+                                  {format(new Date(bill.next_due_date), "MMM d")}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {daysUntil === 0 ? "Today" :
+                                   daysUntil === 1 ? "Tomorrow" :
+                                   daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` :
+                                   `${daysUntil}d`}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right capitalize text-muted-foreground text-xs py-2">
+                              {bill.frequency || 'monthly'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </GlassCard>
+              </CollapsibleContent>
+            </Collapsible>
+          </>
         )}
       </div>
 
-      {/* Bill Schedule Table */}
-      {bills.length > 0 && (
-        <div className="space-y-3">
-          <div 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => handleContextClick("You tapped on 'Bill Schedule'. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill")}
-          >
-            <List className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Bill Schedule</h2>
-            <Sparkles className="w-3 h-3 text-muted-foreground" />
-          </div>
-          
-          <GlassCard className="p-0 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">Bill</TableHead>
-                  <TableHead className="text-muted-foreground">Due Date</TableHead>
-                  <TableHead className="text-muted-foreground text-right">Frequency</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedBills.map((bill) => {
-                  const daysUntil = getDaysUntilDue(bill.next_due_date);
-                  return (
-                    <TableRow 
-                      key={bill.id} 
-                      className="border-border/30 cursor-pointer hover:bg-muted/30"
-                      onClick={() => handleTableRowClick(bill)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="flex items-center gap-2">
-                            {bill.name}
-                            {bill.last_four_digits && (
-                              <span className="text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
-                                {bill.last_four_digits}
-                              </span>
-                            )}
-                          </span>
-                          {bill.paid_at && (
-                            <span className="text-xs text-primary">
-                              Paid {format(new Date(bill.paid_at), "MMM d")}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className={
-                            daysUntil <= 3 ? "text-destructive font-medium" :
-                            daysUntil <= 7 ? "text-warning" : ""
-                          }>
-                            {format(new Date(bill.next_due_date), "MMM d, yyyy")}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {daysUntil === 0 ? "Today" :
-                             daysUntil === 1 ? "Tomorrow" :
-                             daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` :
-                             `in ${daysUntil} days`}
-                          </span>
-                          {/* Show last due date - one cycle before */}
-                          {bill.frequency === 'monthly' && (
-                            <span className="text-xs text-muted-foreground/70 mt-0.5">
-                              Last due: {format(
-                                new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)),
-                                "MMM d"
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right capitalize text-muted-foreground">
-                        {bill.frequency || 'monthly'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </GlassCard>
-        </div>
-      )}
-
-      {/* Feedback Card - Sends to owner */}
-      <GlassCard 
-        className="p-4 bg-secondary/30 border-secondary/50 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleFeedbackClick("General app feedback")}
-      >
-        <div className="flex items-start gap-3">
-          <MessageSquare className="w-5 h-5 text-secondary-foreground mt-0.5" />
-          <div>
-            <p className="font-medium text-sm">Send Feedback</p>
-            <p className="text-xs text-muted-foreground">
-              Suggest changes to the app owner
-            </p>
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Info Card */}
-      <GlassCard 
-        className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleContextClick("You tapped on 'Tap Any Element'. I can help you add, update, or delete bills. What would you like to do?")}
-      >
-        <div className="flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-primary mt-0.5" />
-          <div>
-            <p className="font-medium text-sm">Tap Any Element</p>
-            <p className="text-xs text-muted-foreground">
-              ✨ = Chat with AI | 💬 = Send feedback to owner
-            </p>
-          </div>
-        </div>
-      </GlassCard>
+      {/* Help hint - minimal */}
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60 pt-2">
+        <Sparkles className="w-3 h-3" />
+        <span>Tap any bill to chat with AI</span>
+      </div>
 
       {/* Feedback Dialog */}
       <FeedbackDialog 
