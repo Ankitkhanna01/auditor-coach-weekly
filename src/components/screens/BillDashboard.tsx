@@ -92,7 +92,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
       {urgentBills.length > 0 && (
         <GlassCard 
           className="p-4 border-warning/30 bg-warning/5 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => handleContextClick(`You have ${urgentBills.length} urgent bill${urgentBills.length > 1 ? 's' : ''}: ${urgentBills.map(b => b.name).join(', ')}. What would you like to do?\n• Mark them as paid\n• Snooze reminders\n• See details`)}
+          onClick={() => handleContextClick(`You have ${urgentBills.length} urgent bill${urgentBills.length > 1 ? 's' : ''}: ${urgentBills.map(b => b.name).join(', ')}. What would you like to do?\n• Update bill details\n• Delete a bill`)}
         >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-warning/20">
@@ -114,7 +114,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
       {/* Summary Card - AI clickable */}
       <GlassCard 
         className="p-5 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleContextClick(`You're tracking ${bills.length} bill${bills.length !== 1 ? 's' : ''}. What would you like to do?\n• Add a new bill\n• See payment summary\n• Export bill data`)}
+        onClick={() => handleContextClick(`You're tracking ${bills.length} bill${bills.length !== 1 ? 's' : ''}. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill`)}
       >
         <div className="flex items-center justify-between">
           <div>
@@ -135,7 +135,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
       <div className="space-y-3">
         <h2 
           className="text-lg font-semibold cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center gap-2"
-          onClick={() => handleContextClick("You tapped on 'Upcoming Bills'. What would you like to do?\n• Add a new bill\n• Sort bills differently\n• Filter by type")}
+          onClick={() => handleContextClick("You tapped on 'Upcoming Bills'. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill")}
         >
           Upcoming Bills
           <Sparkles className="w-3 h-3 text-muted-foreground" />
@@ -274,7 +274,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
       {/* Info Card */}
       <GlassCard 
         className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleContextClick("You tapped on 'Tap Any Element'. Everything on this page is interactive! Just tap on anything and I'll help you with it. What would you like to know or change?")}
+        onClick={() => handleContextClick("You tapped on 'Tap Any Element'. I can help you add, update, or delete bills. What would you like to do?")}
       >
         <div className="flex items-start gap-3">
           <Sparkles className="w-5 h-5 text-primary mt-0.5" />
