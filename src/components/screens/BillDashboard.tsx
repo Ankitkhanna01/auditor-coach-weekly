@@ -176,7 +176,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
         <div className="space-y-3">
           <div 
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => handleContextClick("You tapped on 'Bill Schedule'. What would you like to do?\n• See calendar view\n• Export schedule\n• Change display format")}
+            onClick={() => handleContextClick("You tapped on 'Bill Schedule'. What would you like to do?\n• Add a new bill\n• Update an existing bill\n• Delete a bill")}
           >
             <List className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold">Bill Schedule</h2>
