@@ -232,6 +232,15 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
                              daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` :
                              `in ${daysUntil} days`}
                           </span>
+                          {/* Show last due date - one cycle before */}
+                          {bill.frequency === 'monthly' && (
+                            <span className="text-xs text-muted-foreground/70 mt-0.5">
+                              Last due: {format(
+                                new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)),
+                                "MMM d"
+                              )}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right capitalize text-muted-foreground">
