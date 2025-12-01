@@ -119,9 +119,9 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
     }
   };
 
-  const handlePaidClick = (e: React.MouseEvent) => {
+  const handleBillInfoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isPaid && onBillClick) {
+    if (onBillClick) {
       onBillClick(bill);
     }
   };
@@ -174,12 +174,12 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
                 </span>
               )}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div 
+              className="text-sm text-muted-foreground cursor-pointer hover:opacity-80"
+              onClick={handleBillInfoClick}
+            >
               {isPaid ? (
-                <div 
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={handlePaidClick}
-                >
+                <>
                   <span className="text-primary">Paid ✓</span>
                   {bill.paid_at && (
                     <span className="ml-1 text-xs">
@@ -189,7 +189,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
                   <div className="text-xs text-muted-foreground/70">
                     Next due: {format(new Date(bill.next_due_date), "MMM d, yyyy")}
                   </div>
-                </div>
+                </>
               ) : isSnoozed ? (
                 <span className="text-muted-foreground">
                   Snoozed until {new Date(bill.snoozed_until!).toLocaleDateString('en-US', {
@@ -279,7 +279,17 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
                 className="flex-1 gap-2"
                 onClick={() => onBillClick?.(bill)}
               >
-                Edit Payment
+                Edit via Chat
+              </Button>
+            )}
+            {!isPaid && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground"
+                onClick={() => onBillClick?.(bill)}
+              >
+                Ask AI
               </Button>
             )}
           </div>
