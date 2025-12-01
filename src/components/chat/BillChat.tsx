@@ -336,7 +336,7 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-4">
         {messages.map((message, index) => {
           const displayContent = cleanMessageContent(message.content);
           if (!displayContent) return null;
@@ -395,9 +395,9 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-border/50">
-        <div className="flex gap-2">
+      {/* Input - Fixed at bottom above nav */}
+      <div className="fixed bottom-16 left-0 right-0 p-4 border-t border-border/50 bg-background z-30">
+        <div className="max-w-[420px] mx-auto flex gap-2">
           <input
             ref={inputRef}
             type="text"
