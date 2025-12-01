@@ -146,6 +146,7 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
           billing_cycle_days: action.data.billing_cycle_days,
           grace_period_days: action.data.grace_period_days,
           last_statement_date: action.data.last_statement_date,
+          next_due_date: action.data.next_due_date, // Use exact date from AI
         });
         setExecutedActions(prev => new Set([...prev, actionKey]));
       } else if (action.action === "update" && action.type === "bill") {
