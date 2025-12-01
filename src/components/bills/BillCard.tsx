@@ -49,8 +49,8 @@ const snoozeOptions = [
 
 interface BillCardProps {
   bill: Bill;
-  onMarkPaid: (billId: string) => Promise<void>;
-  onSnooze: (billId: string, snoozeUntil: Date) => Promise<void>;
+  onMarkPaid: (billId: string) => void;
+  onSnooze: (billId: string, snoozeUntil: Date) => void;
   onBillClick?: (bill: Bill) => void;
 }
 

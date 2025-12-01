@@ -6,38 +6,11 @@ import { User } from "@supabase/supabase-js";
 
 export type BillFrequency = 'weekly' | 'biweekly' | 'monthly' | 'yearly';
 
-// Calculate next due date for DAY-BASED billing (credit cards, loans)
-// Due date = last_statement_date + grace_period_days
-// (billing_cycle_days is only used to calculate the NEXT statement date)
-function calculateDayBasedDueDate(
-  lastStatementDate: string,
-  billingCycleDays: number,
-  gracePeriodDays: number
-): string {
-  const statementDate = new Date(lastStatementDate);
-  statementDate.setHours(0, 0, 0, 0);
-  
-  // Next due date = statement close date + grace period
-  // billing_cycle_days is NOT added here - it's for statement-to-statement calculation
-  const dueDate = new Date(statementDate);
-  dueDate.setDate(dueDate.getDate() + gracePeriodDays);
-  
-  return dueDate.toISOString().split('T')[0];
-}
-
-// Calculate next statement date (for cycling forward)
-function calculateNextStatementDate(
-  lastStatementDate: string,
-  billingCycleDays: number
-): string {
-  const statementDate = new Date(lastStatementDate);
-  statementDate.setHours(0, 0, 0, 0);
-  statementDate.setDate(statementDate.getDate() + billingCycleDays);
-  return statementDate.toISOString().split('T')[0];
-}
-
-// Calculate next due date for CALENDAR-BASED billing (utilities, rent, etc.)
-function calculateCalendarDueDate(dueDay: number, frequency: BillFrequency = 'monthly', fromDate?: Date): string {
+/**
+ * Calculate the next due date based on due_day and frequency.
+ * This is a simple, predictable calculation - same day each month/week/year.
+ */
+function calculateNextDueDate(dueDay: number, frequency: BillFrequency = 'monthly', fromDate?: Date): string {
   const today = fromDate || new Date();
   today.setHours(0, 0, 0, 0);
   
@@ -85,6 +58,70 @@ function calculateCalendarDueDate(dueDay: number, frequency: BillFrequency = 'mo
   }
   
   return nextDue.toISOString().split('T')[0];
+}
+
+/**
+ * Calculate due_day from statement_close_day and grace_period.
+ * Credit cards: statement closes on day X, payment due ~21 days later.
+ * Example: statement closes 12th + 21 grace = due on 3rd (of next month)
+ */
+function calculateDueDayFromStatement(statementCloseDay: number, gracePeriodDays: number = 21): number {
+  const total = statementCloseDay + gracePeriodDays;
+  // If total > days in a typical month, wrap to next month
+  if (total > 31) {
+    return total - 31;
+  }
+  if (total > 28) {
+    // Simplify: assume ~30 day months, due day wraps if > 30
+    return total > 30 ? total - 30 : total;
+  }
+  return total;
+}
+
+/**
+ * Calculate the next due date for a credit card based on statement date.
+ * Uses the user-provided due date directly - no complex calculations.
+ */
+function calculateCreditCardDueDate(userProvidedDueDate: string): string {
+  const dueDate = new Date(userProvidedDueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  // If the provided due date is in the future, use it directly
+  if (dueDate > today) {
+    return dueDate.toISOString().split('T')[0];
+  }
+  
+  // If it's in the past, calculate next month's due date
+  const dueDay = dueDate.getDate();
+  return calculateNextDueDate(dueDay, 'monthly', today);
+}
+
+/**
+ * Advance the due date by one billing cycle (for after payment)
+ */
+function advanceDueDate(currentDueDate: string, frequency: BillFrequency = 'monthly'): string {
+  const dueDate = new Date(currentDueDate);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  switch (frequency) {
+    case 'weekly':
+      dueDate.setDate(dueDate.getDate() + 7);
+      break;
+    case 'biweekly':
+      dueDate.setDate(dueDate.getDate() + 14);
+      break;
+    case 'yearly':
+      dueDate.setFullYear(dueDate.getFullYear() + 1);
+      break;
+    case 'monthly':
+    default:
+      dueDate.setMonth(dueDate.getMonth() + 1);
+      break;
+  }
+  
+  return dueDate.toISOString().split('T')[0];
 }
 
 // Helper to calculate business days before a date
@@ -148,14 +185,6 @@ export interface Bill {
   updated_at: string;
 }
 
-// Check if bill uses day-based calculation (credit cards, loans)
-function isDayBasedBill(bill: { type: string; billing_cycle_days?: number | null; last_statement_date?: string | null }): boolean {
-  const dayBasedTypes = ['credit_card', 'loan'];
-  return dayBasedTypes.includes(bill.type) && 
-         bill.billing_cycle_days != null && 
-         bill.last_statement_date != null;
-}
-
 function useAuthUser() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -206,35 +235,17 @@ export function useBills() {
         return bill.is_paid && dueDate < today;
       });
       
-      // Auto-reset overdue paid bills
+      // Auto-reset overdue paid bills - advance to next cycle
       if (billsToReset.length > 0) {
         for (const bill of billsToReset) {
-          let nextDueDate: string;
-          let newStatementDate: string | null = bill.last_statement_date;
-          
-          if (isDayBasedBill(bill)) {
-            // For day-based bills, advance the statement date by one cycle
-            newStatementDate = calculateNextStatementDate(
-              bill.last_statement_date!,
-              bill.billing_cycle_days!
-            );
-            nextDueDate = calculateDayBasedDueDate(
-              newStatementDate,
-              bill.billing_cycle_days!,
-              bill.grace_period_days || 21
-            );
-          } else {
-            // For calendar-based bills, use the standard calculation
-            const frequency = (bill.frequency || 'monthly') as BillFrequency;
-            nextDueDate = calculateCalendarDueDate(bill.due_day, frequency);
-          }
+          const frequency = (bill.frequency || 'monthly') as BillFrequency;
+          const nextDueDate = advanceDueDate(bill.next_due_date, frequency);
           
           await supabase
             .from('bills')
             .update({ 
               is_paid: false, 
               next_due_date: nextDueDate,
-              last_statement_date: newStatementDate,
               reminder_sent: false,
               snoozed_until: null
             })
@@ -258,7 +269,7 @@ export function useBills() {
     enabled: !!user,
   });
 
-  // Add bill
+  // Add bill - simplified approach
   const addBillMutation = useMutation({
     mutationFn: async (billData: {
       name: string;
@@ -270,26 +281,29 @@ export function useBills() {
       billing_cycle_days?: number;
       grace_period_days?: number;
       last_statement_date?: string;
+      next_due_date?: string; // Allow direct due date from AI
     }) => {
       if (!user) throw new Error('Not authenticated');
       
       let nextDueDate: string;
-      const isDayBased = ['credit_card', 'loan'].includes(billData.type) && 
-                         billData.billing_cycle_days && 
-                         billData.last_statement_date;
+      let dueDay = billData.due_day || 1;
       
-      if (isDayBased) {
-        // Day-based calculation for credit cards and loans
-        nextDueDate = calculateDayBasedDueDate(
-          billData.last_statement_date!,
-          billData.billing_cycle_days!,
-          billData.grace_period_days || 21
-        );
+      // If AI provided the due date directly, use it
+      if (billData.next_due_date) {
+        nextDueDate = billData.next_due_date;
+        dueDay = new Date(billData.next_due_date).getDate();
+      } else if (['credit_card', 'loan'].includes(billData.type) && billData.last_statement_date) {
+        // Credit card: calculate from statement date + grace period
+        const statementDate = new Date(billData.last_statement_date);
+        const gracePeriod = billData.grace_period_days || 21;
+        const dueDate = new Date(statementDate);
+        dueDate.setDate(dueDate.getDate() + gracePeriod);
+        nextDueDate = dueDate.toISOString().split('T')[0];
+        dueDay = dueDate.getDate();
       } else {
-        // Calendar-based for other bills
+        // Regular bills: use due_day
         const frequency = billData.frequency || 'monthly';
-        const dueDay = billData.due_day || 1;
-        nextDueDate = calculateCalendarDueDate(dueDay, frequency);
+        nextDueDate = calculateNextDueDate(dueDay, frequency);
       }
       
       const { data, error } = await supabase
@@ -299,7 +313,7 @@ export function useBills() {
           name: billData.name,
           type: billData.type,
           last_four_digits: billData.last_four_digits || null,
-          due_day: billData.due_day || 1,
+          due_day: dueDay,
           amount: billData.amount || null,
           next_due_date: nextDueDate,
           frequency: billData.frequency || 'monthly',
@@ -339,26 +353,10 @@ export function useBills() {
       
       let updateData: any = { ...data };
       
-      // Recalculate next_due_date if relevant fields changed
-      const newBillingCycleDays = data.billing_cycle_days ?? bill.billing_cycle_days;
-      const newGracePeriodDays = data.grace_period_days ?? bill.grace_period_days;
-      const newStatementDate = data.last_statement_date ?? bill.last_statement_date;
-      const newDueDay = data.due_day ?? bill.due_day;
-      const newFrequency = data.frequency ?? bill.frequency;
-      const newType = data.type ?? bill.type;
-      
-      const willBeDayBased = ['credit_card', 'loan'].includes(newType) && 
-                             newBillingCycleDays && 
-                             newStatementDate;
-      
-      if (willBeDayBased) {
-        updateData.next_due_date = calculateDayBasedDueDate(
-          newStatementDate!,
-          newBillingCycleDays!,
-          newGracePeriodDays || 21
-        );
-      } else if (data.due_day || data.frequency) {
-        updateData.next_due_date = calculateCalendarDueDate(newDueDay, newFrequency as BillFrequency);
+      // If due_day changed, recalculate next_due_date
+      if (data.due_day && data.due_day !== bill.due_day) {
+        const frequency = data.frequency ?? bill.frequency;
+        updateData.next_due_date = calculateNextDueDate(data.due_day, frequency as BillFrequency);
       }
       
       const { error } = await supabase
@@ -417,7 +415,11 @@ export function useBills() {
     },
   });
 
-  // Mark bill as paid - moves to next cycle
+  /**
+   * Mark bill as paid - DOES NOT change due date immediately.
+   * The due date stays the same until the billing cycle naturally passes,
+   * then auto-reset advances it to the next month.
+   */
   const markAsPaidMutation = useMutation({
     mutationFn: async (billId: string) => {
       if (!user) throw new Error('Not authenticated');
@@ -425,32 +427,13 @@ export function useBills() {
       const bill = bills.find(b => b.id === billId);
       if (!bill) throw new Error('Bill not found');
       
-      let nextDueDate: string;
-      let newStatementDate: string | null = bill.last_statement_date;
-      
-      if (isDayBasedBill(bill)) {
-        // Advance statement date by one cycle
-        newStatementDate = calculateNextStatementDate(
-          bill.last_statement_date!,
-          bill.billing_cycle_days!
-        );
-        nextDueDate = calculateDayBasedDueDate(
-          newStatementDate,
-          bill.billing_cycle_days!,
-          bill.grace_period_days || 21
-        );
-      } else {
-        const frequency = (bill.frequency || 'monthly') as BillFrequency;
-        nextDueDate = calculateCalendarDueDate(bill.due_day, frequency);
-      }
-      
+      // Just mark as paid - don't change the due date
+      // The auto-reset logic will advance the date when the due date passes
       const { error } = await supabase
         .from('bills')
         .update({ 
           is_paid: true,
           paid_at: new Date().toISOString(),
-          next_due_date: nextDueDate,
-          last_statement_date: newStatementDate,
           snoozed_until: null,
           reminder_sent: false
         })
@@ -463,7 +446,7 @@ export function useBills() {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       toast({
         title: "Bill marked as paid",
-        description: "Notifications stopped until next billing cycle.",
+        description: "Reminders paused. Next due date will update after current cycle ends.",
       });
     },
     onError: (error) => {
@@ -506,14 +489,19 @@ export function useBills() {
     },
   });
 
-  // Reset paid status (for next billing cycle)
+  // Reset paid status manually
   const resetPaidStatusMutation = useMutation({
     mutationFn: async (billId: string) => {
       if (!user) throw new Error('Not authenticated');
       
       const { error } = await supabase
         .from('bills')
-        .update({ is_paid: false })
+        .update({ 
+          is_paid: false,
+          paid_at: null,
+          reminder_sent: false,
+          snoozed_until: null
+        })
         .eq('id', billId)
         .eq('user_id', user.id);
       
@@ -521,17 +509,28 @@ export function useBills() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
+      toast({
+        title: "Status reset",
+        description: "Bill marked as unpaid.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   return {
     bills,
     isLoading: authLoading || billsLoading,
-    addBill: addBillMutation.mutateAsync,
-    updateBill: updateBillMutation.mutateAsync,
-    deleteBill: deleteBillMutation.mutateAsync,
-    markAsPaid: markAsPaidMutation.mutateAsync,
-    snoozeBill: snoozeBillMutation.mutateAsync,
-    resetPaidStatus: resetPaidStatusMutation.mutateAsync,
+    addBill: addBillMutation.mutate,
+    updateBill: updateBillMutation.mutate,
+    deleteBill: deleteBillMutation.mutate,
+    markAsPaid: markAsPaidMutation.mutate,
+    snoozeBill: snoozeBillMutation.mutate,
+    resetPaidStatus: resetPaidStatusMutation.mutate,
   };
 }
