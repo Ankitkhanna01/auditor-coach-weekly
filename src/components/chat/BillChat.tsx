@@ -18,10 +18,19 @@ interface BillChatProps {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bill-chat`;
 const STORAGE_KEY = 'bill-chat-messages';
 const EXECUTED_KEY = 'bill-chat-executed';
+const CHAT_TIMESTAMP_KEY = 'bill-chat-timestamp';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning!";
+  if (hour < 17) return "Good afternoon!";
+  return "Good evening!";
+};
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
-  content: "Hey! 👋 I'm here to help you track your bills. Tell me about a bill you'd like to add - like a credit card, utility, or subscription. I'll make sure you get reminded 5 days before it's due!"
+  content: `${getGreeting()} What bills would you like to add or manage today?`
 };
 
 export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
@@ -44,9 +53,23 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
     });
   }, []);
 
-  // Load chat history
+  // Load chat history and auto-delete if older than 7 days
   useEffect(() => {
     if (userId) {
+      // Check timestamp first
+      const timestampStored = localStorage.getItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
+      const timestamp = timestampStored ? parseInt(timestampStored, 10) : 0;
+      const now = Date.now();
+      
+      // If chat is older than 7 days, clear it
+      if (timestamp && (now - timestamp) > SEVEN_DAYS_MS) {
+        localStorage.removeItem(`${STORAGE_KEY}-${userId}`);
+        localStorage.removeItem(`${EXECUTED_KEY}-${userId}`);
+        localStorage.removeItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
+        setMessages([{ ...INITIAL_MESSAGE, content: `${getGreeting()} What bills would you like to add or manage today?` }]);
+        return;
+      }
+      
       const stored = localStorage.getItem(`${STORAGE_KEY}-${userId}`);
       if (stored) {
         try {
@@ -93,10 +116,14 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
     }
   }, [contextMessage]);
 
-  // Save chat history
+  // Save chat history with timestamp
   useEffect(() => {
     if (userId && messages.length > 1) {
       localStorage.setItem(`${STORAGE_KEY}-${userId}`, JSON.stringify(messages));
+      // Update timestamp on first save or if not set
+      if (!localStorage.getItem(`${CHAT_TIMESTAMP_KEY}-${userId}`)) {
+        localStorage.setItem(`${CHAT_TIMESTAMP_KEY}-${userId}`, Date.now().toString());
+      }
     }
   }, [messages, userId]);
 
@@ -114,11 +141,12 @@ export function BillChat({ contextMessage, onContextUsed }: BillChatProps) {
 
   // Clear history
   const clearHistory = () => {
-    setMessages([INITIAL_MESSAGE]);
+    setMessages([{ ...INITIAL_MESSAGE, content: `${getGreeting()} What bills would you like to add or manage today?` }]);
     setExecutedActions(new Set());
     if (userId) {
       localStorage.removeItem(`${STORAGE_KEY}-${userId}`);
       localStorage.removeItem(`${EXECUTED_KEY}-${userId}`);
+      localStorage.removeItem(`${CHAT_TIMESTAMP_KEY}-${userId}`);
     }
   };
 
