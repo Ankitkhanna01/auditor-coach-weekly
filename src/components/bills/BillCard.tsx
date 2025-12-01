@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Bill, getDaysUntilDue, shouldShowReminder } from "@/hooks/useBills";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
-  CreditCard, Zap, Home, Tv, Car, Shield, Receipt, Bell, 
-  Check, Clock, ChevronDown, ChevronUp, CalendarIcon
+  CreditCard, Zap, Home, Tv, Car, Shield, Receipt,
+  Check, Clock, ChevronRight, CalendarIcon, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -30,13 +29,13 @@ const typeIcons: Record<string, typeof CreditCard> = {
 };
 
 const typeColors: Record<string, string> = {
-  credit_card: "from-violet-500 to-purple-600",
-  utility: "from-amber-500 to-orange-600",
-  rent: "from-emerald-500 to-green-600",
-  subscription: "from-pink-500 to-rose-600",
-  loan: "from-blue-500 to-cyan-600",
-  insurance: "from-indigo-500 to-blue-600",
-  other: "from-gray-500 to-slate-600",
+  credit_card: "from-violet-500/80 to-purple-600/80",
+  utility: "from-amber-500/80 to-orange-600/80",
+  rent: "from-emerald-500/80 to-green-600/80",
+  subscription: "from-pink-500/80 to-rose-600/80",
+  loan: "from-blue-500/80 to-cyan-600/80",
+  insurance: "from-indigo-500/80 to-blue-600/80",
+  other: "from-slate-500/80 to-slate-600/80",
 };
 
 const snoozeOptions = [
@@ -124,167 +123,121 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
       onBillClick(bill);
     }
   };
+
+  // Days text formatting
+  const getDaysText = () => {
+    if (daysUntil === 0) return "Today";
+    if (daysUntil === 1) return "Tomorrow";
+    return `${daysUntil}d`;
+  };
+
+  const getDaysColor = () => {
+    if (daysUntil <= 3) return "text-destructive";
+    if (daysUntil <= 7) return "text-warning";
+    return "text-muted-foreground";
+  };
   
   return (
     <>
-      <GlassCard
+      <div
         className={cn(
-          "p-4 transition-all duration-200",
-          isUrgent && !isSnoozed && "border-warning/30 pulse-neon",
-          isSnoozed && "opacity-75 border-muted/30"
+          "rounded-2xl transition-all duration-300",
+          "bg-gradient-to-br from-card/80 to-card/40",
+          "border border-border/50",
+          isUrgent && !isSnoozed && "border-warning/30",
+          isSnoozed && "opacity-60"
         )}
       >
-        <div 
-          className="flex items-center gap-4 cursor-pointer"
+        {/* Main Row */}
+        <button 
+          className="w-full p-4 flex items-center gap-4 text-left"
           onClick={() => setExpanded(!expanded)}
         >
           {/* Icon */}
           <div className={cn(
-            "p-3 rounded-xl bg-gradient-to-br relative",
+            "p-3 rounded-xl bg-gradient-to-br shrink-0",
             colorClass
           )}>
             <Icon className="w-5 h-5 text-white" />
-            {isSnoozed && (
-              <div className="absolute -top-1 -right-1 bg-muted rounded-full p-0.5">
-                <Clock className="w-3 h-3 text-muted-foreground" />
-              </div>
-            )}
           </div>
 
           {/* Bill Info */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 space-y-0.5">
             <div className="flex items-center gap-2">
-              <p className="font-semibold truncate">
+              <p className="font-semibold truncate text-[15px]">
                 {bill.name}
               </p>
               {bill.last_four_digits && (
-                <span className="text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-medium bg-muted/60 px-1.5 py-0.5 rounded-md shrink-0">
                   {bill.last_four_digits}
                 </span>
               )}
             </div>
-            <div 
-              className="text-sm text-muted-foreground cursor-pointer hover:opacity-80"
-              onClick={handleBillInfoClick}
-            >
+            <p className="text-xs text-muted-foreground">
               {isSnoozed ? (
-                <span className="text-muted-foreground">
-                  Snoozed until {new Date(bill.snoozed_until!).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}
-                </span>
+                <>Snoozed · {format(new Date(bill.snoozed_until!), "MMM d, h:mm a")}</>
               ) : (
                 <>
-                  Due: {new Date(bill.next_due_date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                  <span className="ml-2 text-xs opacity-70">
-                    ({bill.frequency || 'monthly'})
-                  </span>
-                  {bill.amount && (
-                    <span className="ml-2">
-                      · ~${bill.amount.toLocaleString()}
-                    </span>
-                  )}
-                  {bill.paid_at && (
-                    <div className="text-xs text-primary mt-0.5">
-                      Paid {format(new Date(bill.paid_at), "MMM d")}
-                    </div>
-                  )}
+                  {format(new Date(bill.next_due_date), "MMM d")}
+                  {bill.amount && <span className="ml-1.5">· ${bill.amount.toLocaleString()}</span>}
                 </>
               )}
+            </p>
+          </div>
+
+          {/* Days Badge */}
+          {!isSnoozed && (
+            <div className={cn(
+              "px-3 py-1.5 rounded-xl text-sm font-semibold shrink-0",
+              daysUntil <= 3 ? "bg-destructive/15 text-destructive" :
+              daysUntil <= 7 ? "bg-warning/15 text-warning" :
+              "bg-muted/40 text-muted-foreground"
+            )}>
+              {getDaysText()}
             </div>
-          </div>
+          )}
 
-          {/* Days Until / Expand */}
-          <div className="text-right flex items-center gap-2">
-            {!isSnoozed && (
-              <div>
-                {isUrgent && (
-                  <Bell className="w-4 h-4 text-warning mb-1 ml-auto animate-pulse" />
-                )}
-                <p className={cn(
-                  "text-lg font-bold",
-                  daysUntil <= 3 ? "text-destructive" :
-                  daysUntil <= 7 ? "text-warning" :
-                  "text-muted-foreground"
-                )}>
-                  {daysUntil === 0 ? "Today" :
-                   daysUntil === 1 ? "Tomorrow" :
-                   `${daysUntil} days`}
-                </p>
-              </div>
-            )}
-            {expanded ? (
-              <ChevronUp className="w-5 h-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-muted-foreground" />
-            )}
-          </div>
-        </div>
+          {isSnoozed && (
+            <div className="p-2 rounded-lg bg-muted/30">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+        </button>
 
-        {/* Expanded Details & Actions */}
+        {/* Expanded Section */}
         {expanded && (
-          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-            {/* Full Name */}
-            <div className="text-center">
-              <p className="font-semibold">
-                {bill.name}
-                {bill.last_four_digits && (
-                  <span className="ml-2 text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
-                    {bill.last_four_digits}
-                  </span>
-                )}
-              </p>
-            </div>
+          <div className="px-4 pb-4 space-y-4">
+            <div className="h-px bg-border/50" />
             
-            {/* Schedule Details */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Next Due</p>
-                <p className="text-sm font-medium">
-                  {format(new Date(bill.next_due_date), "MMM d")}
-                </p>
+            {/* Schedule Grid - Minimal */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-3 rounded-xl bg-muted/20 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Next</p>
+                <p className="text-sm font-medium">{format(new Date(bill.next_due_date), "MMM d")}</p>
               </div>
-              <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Last Due</p>
-                <p className="text-sm font-medium">
-                  {bill.frequency === 'monthly' 
-                    ? format(new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)), "MMM d")
-                    : bill.frequency === 'weekly'
-                    ? format(new Date(new Date(bill.next_due_date).setDate(new Date(bill.next_due_date).getDate() - 7)), "MMM d")
-                    : bill.frequency === 'biweekly'
-                    ? format(new Date(new Date(bill.next_due_date).setDate(new Date(bill.next_due_date).getDate() - 14)), "MMM d")
-                    : bill.frequency === 'yearly'
-                    ? format(new Date(new Date(bill.next_due_date).setFullYear(new Date(bill.next_due_date).getFullYear() - 1)), "MMM d")
-                    : format(new Date(new Date(bill.next_due_date).setMonth(new Date(bill.next_due_date).getMonth() - 1)), "MMM d")
-                  }
-                </p>
+              <div className="p-3 rounded-xl bg-muted/20 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Cycle</p>
+                <p className="text-sm font-medium capitalize">{bill.frequency || 'Monthly'}</p>
               </div>
-              <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cycle</p>
-                <p className="text-sm font-medium capitalize">{bill.frequency || 'monthly'}</p>
+              <div className="p-3 rounded-xl bg-muted/20 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Days</p>
+                <p className={cn("text-sm font-medium", getDaysColor())}>{getDaysText()}</p>
               </div>
             </div>
-            
+
             {bill.paid_at && (
-              <div className="text-center p-2 rounded-lg bg-primary/10">
-                <p className="text-xs text-primary">
-                  Last paid on {format(new Date(bill.paid_at), "MMM d, yyyy")}
+              <div className="text-center py-2 px-3 rounded-xl bg-primary/10">
+                <p className="text-xs text-primary font-medium">
+                  Paid {format(new Date(bill.paid_at), "MMM d, yyyy")}
                 </p>
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions - Clean 2025 style */}
             <div className="flex gap-2">
               <Button
-                variant="default"
                 size="sm"
-                className="flex-1 gap-2"
+                className="flex-1 h-11 rounded-xl gap-2 font-medium"
                 onClick={handleMarkPaid}
                 disabled={isLoading}
               >
@@ -294,7 +247,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 gap-2"
+                className="flex-1 h-11 rounded-xl gap-2 font-medium"
                 onClick={() => setSnoozeOpen(true)}
                 disabled={isLoading}
               >
@@ -304,44 +257,44 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 text-muted-foreground"
+                className="h-11 px-3 rounded-xl"
                 onClick={() => onBillClick?.(bill)}
               >
-                Ask AI
+                <Sparkles className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
-      </GlassCard>
+      </div>
 
-      {/* Snooze Dialog */}
+      {/* Snooze Dialog - Clean 2025 style */}
       <Dialog open={snoozeOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-[340px]">
+        <DialogContent className="max-w-[340px] rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Snooze Notifications</DialogTitle>
+            <DialogTitle className="text-lg">Snooze</DialogTitle>
           </DialogHeader>
           
           {!showCustom ? (
-            <div className="space-y-2 mt-4">
+            <div className="space-y-2 mt-2">
               <p className="text-sm text-muted-foreground mb-4">
-                How long would you like to snooze reminders for "{bill.name}"?
+                Pause reminders for "{bill.name}"
               </p>
               {snoozeOptions.map((option) => (
                 <Button
                   key={option.hours}
                   variant="outline"
-                  className="w-full justify-start gap-3"
+                  className="w-full justify-start gap-3 h-12 rounded-xl"
                   onClick={() => handleSnooze(option.hours)}
                   disabled={isLoading}
                 >
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 text-muted-foreground" />
                   {option.label}
                 </Button>
               ))}
-              <div className="pt-2 border-t border-border/50 mt-3">
+              <div className="pt-2">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 text-muted-foreground"
+                  className="w-full justify-start gap-3 text-muted-foreground h-12 rounded-xl"
                   onClick={() => setShowCustom(true)}
                   disabled={isLoading}
                 >
@@ -351,7 +304,7 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               </div>
             </div>
           ) : (
-            <div className="space-y-4 mt-4">
+            <div className="space-y-4 mt-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -362,13 +315,13 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               </Button>
               
               <div className="space-y-2">
-                <Label>Date</Label>
+                <Label className="text-xs uppercase tracking-wider">Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal h-12 rounded-xl",
                         !customDate && "text-muted-foreground"
                       )}
                     >
@@ -390,17 +343,17 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
               </div>
               
               <div className="space-y-2">
-                <Label>Time</Label>
+                <Label className="text-xs uppercase tracking-wider">Time</Label>
                 <Input
                   type="time"
                   value={customTime}
                   onChange={(e) => setCustomTime(e.target.value)}
-                  className="w-full"
+                  className="w-full h-12 rounded-xl"
                 />
               </div>
               
               <Button
-                className="w-full"
+                className="w-full h-12 rounded-xl"
                 onClick={handleCustomSnooze}
                 disabled={isLoading || !customDate}
               >

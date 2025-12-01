@@ -22,7 +22,8 @@ export function GlassCard({
       className={cn(
         elevated ? "glass-card-elevated" : "glass-card",
         hover && "card-hover cursor-pointer",
-        "p-4 transition-all duration-300",
+        "p-5 transition-all duration-300",
+        onClick && "cursor-pointer",
         className
       )}
     >

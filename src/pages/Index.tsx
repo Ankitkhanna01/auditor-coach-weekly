@@ -116,44 +116,45 @@ const Index = () => {
       {/* Main Content */}
       <main className={cn(
         "overflow-y-auto min-h-screen",
-        activeTab === "chat" ? "px-0 pt-0 pb-16" : "px-4 pt-6 pb-24"
+        activeTab === "chat" ? "px-0 pt-0 pb-24" : "px-5 pt-8 pb-28"
       )}>
         {renderScreen()}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bottom-nav z-40">
-        <div className="max-w-[420px] mx-auto flex justify-around items-center h-16 px-1">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const Icon = tab.icon;
-            
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 px-4 rounded-xl transition-all duration-300",
-                  isActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <div className={cn(
-                  "p-2 rounded-lg transition-all duration-300",
-                  isActive && "bg-gradient-primary shadow-glow"
-                )}>
-                  <Icon className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive && "text-primary-foreground"
-                  )} />
-                </div>
-                <span className="text-[10px] font-medium">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      {/* 2025 Floating Pill Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 pb-6 px-4 pointer-events-none z-40">
+        <nav className="max-w-[280px] mx-auto floating-nav pointer-events-auto">
+          <div className="flex justify-around items-center h-16 px-2">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-1 py-2 px-5 rounded-2xl transition-all duration-300",
+                    isActive 
+                      ? "text-primary" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <div className={cn(
+                    "p-2 rounded-xl transition-all duration-300",
+                    isActive && "bg-primary/15"
+                  )}>
+                    <Icon className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive && "text-primary"
+                    )} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };
