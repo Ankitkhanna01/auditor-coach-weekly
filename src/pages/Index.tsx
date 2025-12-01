@@ -47,11 +47,11 @@ const Index = () => {
     
     if (bill.is_paid) {
       const paidDate = bill.paid_at ? format(new Date(bill.paid_at), "MMMM d, yyyy") : "recently";
-      message = `You selected "${bill.name}" which was paid on ${paidDate}. Next due: ${nextDue}. What would you like to do?\n• Change the payment date\n• Update the next due date\n• Edit bill details\n• Delete this bill`;
+      message = `You selected "${bill.name}" which was paid on ${paidDate}. Next due: ${nextDue}. What would you like to do?\n• Update the due date\n• Edit bill details\n• Delete this bill`;
     } else {
       const daysText = getDaysUntilDue(bill.next_due_date);
       const urgency = daysText <= 3 ? " (due very soon!)" : daysText <= 7 ? " (due soon)" : "";
-      message = `You selected "${bill.name}" due on ${nextDue}${urgency}. What would you like to do?\n• Mark it as paid\n• Snooze reminders\n• Edit bill details\n• Delete this bill`;
+      message = `You selected "${bill.name}" due on ${nextDue}${urgency}. What would you like to do?\n• Update bill details\n• Delete this bill`;
     }
     
     setContextMessage(message);
