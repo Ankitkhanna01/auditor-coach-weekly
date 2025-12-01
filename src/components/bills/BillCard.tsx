@@ -230,6 +230,18 @@ export function BillCard({ bill, onMarkPaid, onSnooze, onBillClick }: BillCardPr
         {/* Expanded Details & Actions */}
         {expanded && (
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+            {/* Full Name */}
+            <div className="text-center">
+              <p className="font-semibold">
+                {bill.name}
+                {bill.last_four_digits && (
+                  <span className="ml-2 text-xs font-normal bg-muted/50 px-1.5 py-0.5 rounded">
+                    {bill.last_four_digits}
+                  </span>
+                )}
+              </p>
+            </div>
+            
             {/* Schedule Details */}
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="p-2 rounded-lg bg-muted/30">
