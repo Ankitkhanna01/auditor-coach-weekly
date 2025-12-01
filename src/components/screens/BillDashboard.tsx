@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useBills, getDaysUntilDue, shouldShowReminder, Bill } from "@/hooks/useBills";
 import { useNotifications } from "@/hooks/useNotifications";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { BillCard } from "@/components/bills/BillCard";
-import { Receipt, Bell, Calendar, AlertTriangle, List, Sparkles } from "lucide-react";
+import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
+import { Receipt, Bell, Calendar, AlertTriangle, List, Sparkles, MessageSquare } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,6 +23,8 @@ interface BillDashboardProps {
 
 export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps) {
   const { bills, isLoading, markAsPaid, snoozeBill } = useBills();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackContext, setFeedbackContext] = useState("");
   
   // Initialize notifications - this will check and send notifications when bills load
   useNotifications(bills);
@@ -57,15 +61,26 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
     }
   };
 
+  const handleFeedbackClick = (context: string) => {
+    setFeedbackContext(context);
+    setFeedbackOpen(true);
+  };
+
   return (
     <div className="space-y-6 stagger-children">
-      {/* Header */}
-      <div 
-        className="space-y-1 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => handleContextClick("You tapped on 'Bill Reminders'. What would you like to do?\n• Add a new bill\n• View all bills\n• Get help with the app")}
-      >
-        <h1 className="text-2xl font-bold gradient-text">Bill Reminders</h1>
-        <p className="text-sm text-muted-foreground">
+      {/* Header - Feedback only (not AI changeable) */}
+      <div className="space-y-1">
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => handleFeedbackClick("App title: 'Bill Reminders'")}
+        >
+          <h1 className="text-2xl font-bold gradient-text">Bill Reminders</h1>
+          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+        </div>
+        <p 
+          className="text-sm text-muted-foreground cursor-pointer hover:opacity-80"
+          onClick={() => handleFeedbackClick("App tagline: 'Never miss a payment again'")}
+        >
           Never miss a payment again
         </p>
       </div>
@@ -73,7 +88,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
       {/* Notification Permission Prompt */}
       <NotificationPermission />
 
-      {/* Urgent Bills Alert */}
+      {/* Urgent Bills Alert - AI clickable */}
       {urgentBills.length > 0 && (
         <GlassCard 
           className="p-4 border-warning/30 bg-warning/5 cursor-pointer hover:opacity-80 transition-opacity"
@@ -96,7 +111,7 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
         </GlassCard>
       )}
 
-      {/* Summary Card */}
+      {/* Summary Card - AI clickable */}
       <GlassCard 
         className="p-5 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={() => handleContextClick(`You're tracking ${bills.length} bill${bills.length !== 1 ? 's' : ''}. What would you like to do?\n• Add a new bill\n• See payment summary\n• Export bill data`)}
@@ -242,6 +257,22 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
         </div>
       )}
 
+      {/* Feedback Card - Sends to owner */}
+      <GlassCard 
+        className="p-4 bg-secondary/30 border-secondary/50 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => handleFeedbackClick("General app feedback")}
+      >
+        <div className="flex items-start gap-3">
+          <MessageSquare className="w-5 h-5 text-secondary-foreground mt-0.5" />
+          <div>
+            <p className="font-medium text-sm">Send Feedback</p>
+            <p className="text-xs text-muted-foreground">
+              Suggest changes to the app owner
+            </p>
+          </div>
+        </div>
+      </GlassCard>
+
       {/* Info Card */}
       <GlassCard 
         className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:opacity-80 transition-opacity"
@@ -252,11 +283,18 @@ export function BillDashboard({ onBillClick, onContextChat }: BillDashboardProps
           <div>
             <p className="font-medium text-sm">Tap Any Element</p>
             <p className="text-xs text-muted-foreground">
-              Everything is clickable - tap to chat with AI
+              ✨ = Chat with AI | 💬 = Send feedback to owner
             </p>
           </div>
         </div>
       </GlassCard>
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog 
+        open={feedbackOpen} 
+        onOpenChange={setFeedbackOpen}
+        context={feedbackContext}
+      />
     </div>
   );
 }
