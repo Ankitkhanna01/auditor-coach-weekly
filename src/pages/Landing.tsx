@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Bell, Check, Smartphone, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import IOSInstallModal from "@/components/install/IOSInstallModal";
+import AndroidInstallModal from "@/components/install/AndroidInstallModal";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -163,78 +165,12 @@ const Landing = () => {
 
         {/* iOS Instructions Modal */}
         {showIOSInstructions && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-end animate-in fade-in">
-            <div className="bg-card rounded-t-3xl p-6 w-full max-h-[85vh] overflow-y-auto">
-              <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-6" />
-              
-              <h2 className="text-xl font-bold text-center mb-2">Install on iPhone</h2>
-              <p className="text-sm text-muted-foreground text-center mb-6">Follow these quick steps:</p>
-              
-              <div className="space-y-5">
-                {[
-                  { step: "1", title: "Tap Share", desc: "The square with arrow at the bottom" },
-                  { step: "2", title: "Add to Home Screen", desc: "Scroll down in the menu" },
-                  { step: "3", title: "Tap Add", desc: "Top right corner" },
-                  { step: "4", title: "Open from home screen", desc: "Create account & start!" },
-                ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-                      <span className="text-white font-bold text-sm">{item.step}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button
-                onClick={() => setShowIOSInstructions(false)}
-                className="w-full mt-8 h-12 bg-gradient-to-r from-emerald-500 to-teal-600"
-              >
-                Got it!
-              </Button>
-            </div>
-          </div>
+          <IOSInstallModal onClose={() => setShowIOSInstructions(false)} />
         )}
 
         {/* Android Instructions Modal */}
         {showAndroidInstructions && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-end animate-in fade-in">
-            <div className="bg-card rounded-t-3xl p-6 w-full max-h-[85vh] overflow-y-auto">
-              <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-6" />
-              
-              <h2 className="text-xl font-bold text-center mb-2">Install on Android</h2>
-              <p className="text-sm text-muted-foreground text-center mb-6">Follow these quick steps:</p>
-              
-              <div className="space-y-5">
-                {[
-                  { step: "1", title: "Tap Menu", desc: "The ⋮ icon in top right corner" },
-                  { step: "2", title: "Install App", desc: "Or 'Add to Home Screen'" },
-                  { step: "3", title: "Tap Install", desc: "Confirm the installation" },
-                  { step: "4", title: "Open from home screen", desc: "Create account & start!" },
-                ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-                      <span className="text-white font-bold text-sm">{item.step}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button
-                onClick={() => setShowAndroidInstructions(false)}
-                className="w-full mt-8 h-12 bg-gradient-to-r from-emerald-500 to-teal-600"
-              >
-                Got it!
-              </Button>
-            </div>
-          </div>
+          <AndroidInstallModal onClose={() => setShowAndroidInstructions(false)} />
         )}
 
         {/* Success Modal */}
