@@ -79,24 +79,24 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Top Install Banner - Shows when install is ready */}
       {deferredPrompt && !isInIframe && (
         <div 
           onClick={handleInstall}
           className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
-          <Smartphone className="w-5 h-5 text-white" />
+          <Smartphone className="w-5 h-5 text-white shrink-0" />
           <span className="text-white font-semibold text-sm">Tap here to install NeverLate</span>
         </div>
       )}
 
       {/* Ambient Glow */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-emerald-600/15 via-teal-500/5 to-transparent blur-[80px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[300px] bg-gradient-to-b from-emerald-600/15 via-teal-500/5 to-transparent blur-[80px]" />
       </div>
 
-      <div className={`flex-1 flex flex-col relative z-10 app-container ${deferredPrompt && !isInIframe ? 'pt-12' : ''}`}>
+      <div className={`flex-1 flex flex-col relative z-10 w-full max-w-md mx-auto ${deferredPrompt && !isInIframe ? 'pt-12' : ''}`}>
         
         {/* Hero Section - Clean & Focused */}
         <div className="flex-1 flex flex-col justify-center px-6 py-12 text-center">
@@ -112,19 +112,19 @@ const Landing = () => {
           </div>
 
           {/* Single Clear Headline */}
-          <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 leading-tight px-4">
             Never Miss a<br />
             <span className="gradient-text">Bill Payment</span>
           </h1>
           
           {/* One-line Value Prop */}
-          <p className="text-lg text-muted-foreground mb-8 max-w-xs mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-xs mx-auto px-4">
             Smart reminders before every due date. No more late fees.
           </p>
 
           {/* Social Proof - Simple */}
-          <div className="flex items-center justify-center gap-1 mb-8">
-            <div className="flex -space-x-2">
+          <div className="flex items-center justify-center gap-2 mb-8 px-4">
+            <div className="flex -space-x-2 shrink-0">
               {['S', 'M', 'J'].map((initial, i) => (
                 <div 
                   key={i}
@@ -134,25 +134,25 @@ const Landing = () => {
                 </div>
               ))}
             </div>
-            <div className="ml-3 text-left">
+            <div className="ml-2 text-left">
               <div className="flex items-center gap-1">
                 {[1,2,3,4,5].map(i => (
                   <Star key={i} className="w-3.5 h-3.5 fill-warning text-warning" />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Join 500+ early adopters</p>
+              <p className="text-xs text-muted-foreground whitespace-nowrap">Join 500+ early adopters</p>
             </div>
           </div>
 
           {/* 3 Key Benefits - Concise */}
-          <div className="space-y-3 mb-10 max-w-xs mx-auto">
+          <div className="space-y-3 mb-10 max-w-xs mx-auto px-4">
             {[
               "Reminds you 3 days before",
               "Track all bills in one place",
               "Takes 30 seconds to set up"
             ].map((benefit, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center shrink-0">
+              <div key={i} className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-success" />
                 </div>
                 <p className="text-sm text-foreground text-left">{benefit}</p>
@@ -262,33 +262,33 @@ const Landing = () => {
       </div>
 
       {/* CTA Section - Fixed at bottom, Clean */}
-      <div className="sticky bottom-0 z-40 p-6 bg-gradient-to-t from-background via-background to-transparent pt-10">
+      <div className="sticky bottom-0 z-40 p-6 bg-gradient-to-t from-background via-background to-transparent pt-10 w-full">
         {/* Urgency - Single line */}
-        <p className="text-center text-sm text-muted-foreground mb-3">
+        <p className="text-center text-sm text-muted-foreground mb-3 px-4">
           <span className="text-warning font-medium">Free for early adopters</span> — limited time
         </p>
         
         <Button
           onClick={handleInstall}
           disabled={isInstalling}
-          className="w-full h-14 text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 rounded-2xl shadow-xl shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full h-14 text-base sm:text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 rounded-2xl shadow-xl shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
         >
           {isInstalling ? (
             "Installing..."
           ) : isInIframe ? (
             <>
-              <Smartphone className="w-5 h-5 mr-2" />
-              Open in Browser to Install
+              <Smartphone className="w-5 h-5 mr-2 shrink-0" />
+              <span>Open in Browser to Install</span>
             </>
           ) : (
             <>
-              <Smartphone className="w-5 h-5 mr-2" />
-              Get Started Free
+              <Smartphone className="w-5 h-5 mr-2 shrink-0" />
+              <span>Get Started Free</span>
             </>
           )}
         </Button>
         
-        <p className="text-center text-xs text-muted-foreground mt-3">
+        <p className="text-center text-xs text-muted-foreground mt-3 px-4">
           {isInIframe ? "Open in browser for direct install" : "No app store needed · Works offline · 30 sec setup"}
         </p>
       </div>
