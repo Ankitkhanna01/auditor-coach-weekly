@@ -97,11 +97,31 @@ export function useNotifications(bills: Bill[]) {
     return false;
   }, []);
 
+  // Play alarm sound
+  const playAlarmSound = useCallback(() => {
+    try {
+      const audio = new Audio("/alarm-sound.mp3");
+      audio.volume = 0.8;
+      audio.loop = false;
+      audio.play().catch(e => console.log("Audio play failed:", e));
+      
+      // Vibrate if supported (pattern: vibrate 500ms, pause 200ms, repeat 3x)
+      if ("vibrate" in navigator) {
+        navigator.vibrate([500, 200, 500, 200, 500, 200, 500]);
+      }
+    } catch (e) {
+      console.error("Failed to play alarm:", e);
+    }
+  }, []);
+
   // Send a notification
   const sendNotification = useCallback((title: string, body: string, icon?: string) => {
     if (permission !== "granted") return;
 
     try {
+      // Play alarm sound and vibrate
+      playAlarmSound();
+      
       // Try service worker notification first (works when app is in background)
       if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.ready.then((registration) => {
@@ -111,6 +131,7 @@ export function useNotifications(bills: Bill[]) {
             badge: "/pwa-192x192.png",
             tag: title, // Prevents duplicate notifications
             requireInteraction: true,
+            vibrate: [500, 200, 500, 200, 500],
           } as NotificationOptions);
         });
       } else {
@@ -123,7 +144,7 @@ export function useNotifications(bills: Bill[]) {
     } catch (e) {
       console.error("Failed to send notification:", e);
     }
-  }, [permission]);
+  }, [permission, playAlarmSound]);
 
   // Check and send notifications for bills
   const checkBillNotifications = useCallback(() => {
