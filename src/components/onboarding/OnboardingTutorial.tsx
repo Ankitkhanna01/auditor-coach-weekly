@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, MessageCircle, CheckCircle, ArrowRight } from "lucide-react";
+import { Bell, MessageCircle, CheckCircle, ArrowRight, Smartphone, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OnboardingTutorialProps {
@@ -10,20 +10,37 @@ const steps = [
   {
     icon: Bell,
     title: "Never Miss a Due Date",
-    description: "We remind you 3 days, 1 day, and on the due date itself.",
+    description: "Get automatic reminders 5 days, 2 days, and 1 day before your bills are due. Even when you're not using the app!",
     color: "from-violet-500 to-violet-600",
+    tip: "Tip: Enable notifications when prompted to get alerts automatically",
   },
   {
     icon: MessageCircle,
     title: "Add Bills by Chatting",
-    description: "Just tell us about your bills naturally. No forms needed.",
+    description: "Just tell us about your bills naturally. Say 'Add HDFC credit card due on 15th' - no complicated forms needed.",
     color: "from-cyan-500 to-cyan-600",
+    tip: "Try: 'Add rent $1500 due on 1st of every month'",
+  },
+  {
+    icon: Clock,
+    title: "Snooze & Mark as Paid",
+    description: "Tap any bill to snooze reminders or mark it as paid. We'll automatically schedule the next reminder.",
+    color: "from-amber-500 to-orange-500",
+    tip: "Long press on a bill for quick actions",
+  },
+  {
+    icon: Smartphone,
+    title: "Works Like a Native App",
+    description: "This app is installed on your device. It works offline, loads instantly, and sends real notifications.",
+    color: "from-emerald-500 to-teal-500",
+    tip: "Add it to your home screen for quick access",
   },
   {
     icon: CheckCircle,
     title: "Stay on Track",
-    description: "See all upcoming bills at a glance. Pay on time, every time.",
+    description: "See all upcoming bills at a glance on your dashboard. Pay on time, every time, and save on late fees.",
     color: "from-success to-emerald-600",
+    tip: "Your financial data stays private and secure",
   },
 ];
 
@@ -69,9 +86,16 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
         <h2 className="text-2xl font-bold text-foreground mb-3 animate-fade-in">
           {step.title}
         </h2>
-        <p className="text-muted-foreground text-base max-w-xs animate-fade-in">
+        <p className="text-muted-foreground text-base max-w-xs mb-4 animate-fade-in">
           {step.description}
         </p>
+        
+        {/* Tip */}
+        <div className="bg-primary/10 rounded-xl px-4 py-3 max-w-xs animate-fade-in">
+          <p className="text-sm text-primary font-medium">
+            {step.tip}
+          </p>
+        </div>
       </div>
 
       {/* Bottom section */}
