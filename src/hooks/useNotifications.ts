@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Bill, getDaysUntilDue } from "./useBills";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
 
 const NOTIFICATION_STORAGE_KEY = "bill-notifications-sent";
 
@@ -62,9 +64,21 @@ function shouldNotify(bill: Bill): boolean {
   return true;
 }
 
+// Helper function
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
 export function useNotifications(bills: Bill[]) {
+  const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [sentNotifications, setSentNotifications] = useState<Set<string>>(new Set());
+  const [pushSubscribed, setPushSubscribed] = useState(false);
 
   // Load sent notifications on mount
   useEffect(() => {
@@ -75,6 +89,54 @@ export function useNotifications(bills: Bill[]) {
       setPermission(Notification.permission);
     }
   }, []);
+
+  // Subscribe to push notifications when permission is granted
+  const subscribeToPush = useCallback(async () => {
+    if (!user?.id || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+        });
+      }
+
+      if (subscription) {
+        const p256dh = subscription.getKey('p256dh');
+        const auth = subscription.getKey('auth');
+
+        if (p256dh && auth) {
+          await supabase
+            .from('push_subscriptions')
+            .upsert({
+              user_id: user.id,
+              endpoint: subscription.endpoint,
+              p256dh: arrayBufferToBase64(p256dh),
+              auth: arrayBufferToBase64(auth),
+            }, {
+              onConflict: 'user_id,endpoint',
+            });
+
+          setPushSubscribed(true);
+          console.log('Push subscription saved');
+        }
+      }
+    } catch (error) {
+      console.error('Error subscribing to push:', error);
+    }
+  }, [user?.id]);
+
+  // Auto-subscribe when permission is granted
+  useEffect(() => {
+    if (permission === "granted" && user?.id && !pushSubscribed) {
+      subscribeToPush();
+    }
+  }, [permission, user?.id, pushSubscribed, subscribeToPush]);
 
   // Request notification permission
   const requestPermission = useCallback(async () => {
