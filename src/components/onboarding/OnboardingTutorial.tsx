@@ -17,7 +17,7 @@ const steps = [
   {
     icon: MessageCircle,
     title: "Add Bills by Chatting",
-    description: "Just tell us about your bills naturally. Say 'Add HDFC credit card due on 15th' - no complicated forms needed.",
+    description: "Just tell us about your bills naturally. Say 'Add credit card due on 15th' — no complicated forms needed.",
     color: "from-cyan-500 to-cyan-600",
     tip: "Try: 'Add rent $1500 due on 1st of every month'",
   },
