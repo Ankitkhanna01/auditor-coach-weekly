@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, Smartphone, Star } from "lucide-react";
+import { Bell, Check, HelpCircle, Smartphone, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IOSInstallModal from "@/components/install/IOSInstallModal";
 import AndroidInstallModal from "@/components/install/AndroidInstallModal";
@@ -12,15 +12,19 @@ interface BeforeInstallPromptEvent extends Event {
 const Landing = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
-  const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [showInstallInstructions, setShowInstallInstructions] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIOSDevice = /ipad|iphone|ipod/.test(userAgent) && !(window as any).MSStream;
+    const isAndroidDevice = /android/.test(userAgent);
+    
     setIsIOS(isIOSDevice);
+    setIsAndroid(isAndroidDevice);
     
     // Check if running in iframe (Lovable preview)
     const inIframe = window.self !== window.top;
@@ -51,11 +55,6 @@ const Landing = () => {
       window.open(window.location.href, '_blank');
       return;
     }
-    
-    if (isIOS) {
-      setShowIOSInstructions(true);
-      return;
-    }
 
     // If native prompt is available, use it directly
     if (deferredPrompt) {
@@ -76,17 +75,30 @@ const Landing = () => {
       return;
     }
 
-    // Fallback: show Android instructions modal
-    setShowAndroidInstructions(true);
+    // Fallback: show instructions modal based on OS
+    setShowInstallInstructions(true);
+  };
+
+  const showTutorial = () => {
+    setShowInstallInstructions(true);
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
+      {/* Tutorial Button - Top Left */}
+      <button
+        onClick={showTutorial}
+        className="fixed top-3 left-3 z-50 p-2 rounded-full bg-card/80 backdrop-blur border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="How to install"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+
       {/* Top Install Banner - Shows when install is ready */}
       {deferredPrompt && !isInIframe && (
         <div 
           onClick={handleInstall}
-          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+          className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
           <Smartphone className="w-5 h-5 text-white shrink-0" />
           <span className="text-white font-semibold text-sm">Tap here to install NeverLate</span>
@@ -163,14 +175,13 @@ const Landing = () => {
           </div>
         </div>
 
-        {/* iOS Instructions Modal */}
-        {showIOSInstructions && (
-          <IOSInstallModal onClose={() => setShowIOSInstructions(false)} />
-        )}
-
-        {/* Android Instructions Modal */}
-        {showAndroidInstructions && (
-          <AndroidInstallModal onClose={() => setShowAndroidInstructions(false)} />
+        {/* Install Instructions Modal - OS specific */}
+        {showInstallInstructions && (
+          isIOS ? (
+            <IOSInstallModal onClose={() => setShowInstallInstructions(false)} />
+          ) : (
+            <AndroidInstallModal onClose={() => setShowInstallInstructions(false)} />
+          )
         )}
 
         {/* Success Modal */}
