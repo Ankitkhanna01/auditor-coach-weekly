@@ -49,10 +49,10 @@ function getBusinessDaysUntilDue(nextDueDate: string): number {
 async function sendPushNotification(
   subscription: PushSubscription,
   title: string,
-  body: string
+  body: string,
+  vapidPublicKey: string
 ): Promise<boolean> {
   try {
-    // Use the web-push compatible format
     const payload = JSON.stringify({
       title,
       body,
@@ -60,14 +60,35 @@ async function sendPushNotification(
       badge: '/pwa-192x192.png',
       vibrate: [500, 200, 500, 200, 500],
       requireInteraction: true,
+      tag: 'bill-reminder',
+      data: { url: '/app' },
     });
 
-    console.log(`Sending push to ${subscription.endpoint.substring(0, 50)}...`);
+    console.log(`Attempting push to: ${subscription.endpoint.substring(0, 60)}...`);
     
-    // Note: In production, you'd use web-push library with VAPID keys
-    // For now, we'll use the Push API directly if supported
-    // This requires setting up VAPID keys in production
-    
+    // Send the notification - for FCM/Push services that accept JSON payloads
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'TTL': '86400',
+        'Urgency': 'high',
+      },
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Push failed with status ${response.status}: ${errorText}`);
+      
+      // 404/410 = subscription invalid
+      if (response.status === 404 || response.status === 410) {
+        console.log('Subscription no longer valid');
+      }
+      return false;
+    }
+
+    console.log(`Push sent successfully!`);
     return true;
   } catch (error) {
     console.error('Failed to send push notification:', error);
@@ -85,10 +106,11 @@ serve(async (req) => {
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get all bills that are due soon and not paid/snoozed
+    // Get all bills that are due soon and not paid
     const now = new Date();
     const { data: bills, error: billsError } = await supabase
       .from('bills')
@@ -125,15 +147,19 @@ serve(async (req) => {
 
     const thresholds = [5, 2, 1]; // Business days before due
     let notificationsSent = 0;
+    let notificationsFailed = 0;
 
     for (const bill of bills || []) {
       // Skip if snoozed
       if (bill.snoozed_until && new Date(bill.snoozed_until) > now) {
+        console.log(`Skipping ${bill.name} - snoozed`);
         continue;
       }
 
       const businessDays = getBusinessDaysUntilDue(bill.next_due_date);
       const userSubs = subsByUser[bill.user_id];
+
+      console.log(`Bill "${bill.name}": ${businessDays} business days, ${userSubs?.length || 0} subscriptions`);
 
       if (!userSubs || userSubs.length === 0) {
         continue;
@@ -168,24 +194,31 @@ serve(async (req) => {
           const title = `${emoji} Bill Due ${urgencyText}`;
           const body = `${billName} is due on ${dueDate}${bill.amount ? ` - ~$${bill.amount}` : ''}`;
 
+          console.log(`Sending: "${title}" - "${body}"`);
+
           // Send to all user's subscriptions
           for (const sub of userSubs) {
-            await sendPushNotification(sub, title, body);
-            notificationsSent++;
+            const success = await sendPushNotification(sub, title, body, vapidPublicKey);
+            if (success) {
+              notificationsSent++;
+            } else {
+              notificationsFailed++;
+            }
           }
           
-          break; // Only send one notification per bill
+          break;
         }
       }
     }
 
-    console.log(`Sent ${notificationsSent} notifications`);
+    console.log(`Done: sent ${notificationsSent}, failed ${notificationsFailed}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         billsChecked: bills?.length || 0,
-        notificationsSent 
+        notificationsSent,
+        notificationsFailed
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
