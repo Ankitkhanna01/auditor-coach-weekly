@@ -28,6 +28,21 @@ export function usePushSubscription() {
     checkSubscription();
   }, [user?.id]);
 
+  // VAPID public key for push subscription
+  const VAPID_PUBLIC_KEY = 'BNsPteJswI1pya4q7R9-s3MB-Rl2FBYKwRFUVlZtzgZqtmkcbiGrou8E74wAZQ72GstBvzHXjhgtUAf5tFZX_ow';
+
+  // Convert VAPID key to Uint8Array
+  const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
   // Subscribe to push notifications
   const subscribe = useCallback(async () => {
     if (!user?.id || !('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -44,10 +59,13 @@ export function usePushSubscription() {
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
-        // Create new subscription with userVisibleOnly
+        // Create new subscription with VAPID public key
+        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
+          applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
         });
+        console.log('Created new push subscription with VAPID key');
       }
 
       if (subscription) {
