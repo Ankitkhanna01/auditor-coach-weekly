@@ -24,7 +24,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
         'X-Connection-Api-Key': RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: 'Bill Reminders <onboarding@resend.dev>',
+        from: 'NeverLate <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
