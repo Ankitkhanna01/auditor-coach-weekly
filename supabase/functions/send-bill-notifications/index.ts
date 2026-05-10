@@ -6,6 +6,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const RESEND_GATEWAY_URL = 'https://connector-gateway.lovable.dev/resend';
+
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+  if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
+    console.error('Missing email credentials (LOVABLE_API_KEY or RESEND_API_KEY)');
+    return false;
+  }
+  try {
+    const res = await fetch(`${RESEND_GATEWAY_URL}/emails`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'X-Connection-Api-Key': RESEND_API_KEY,
+      },
+      body: JSON.stringify({
+        from: 'Bill Reminders <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error(`Email send failed [${res.status}]: ${txt}`);
+      return false;
+    }
+    console.log(`Email sent to ${to}`);
+    return true;
+  } catch (e) {
+    console.error('Email send error:', e);
+    return false;
+  }
+}
+
 interface PushSubscription {
   user_id: string;
   endpoint: string;
