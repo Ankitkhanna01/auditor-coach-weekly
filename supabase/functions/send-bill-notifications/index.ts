@@ -185,6 +185,26 @@ serve(async (req) => {
     const thresholds = [5, 2, 1]; // Business days before due
     let notificationsSent = 0;
     let notificationsFailed = 0;
+    let emailsSent = 0;
+    let emailsFailed = 0;
+    const userEmailCache: Record<string, string | null> = {};
+
+    async function getUserEmail(userId: string): Promise<string | null> {
+      if (userId in userEmailCache) return userEmailCache[userId];
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(userId);
+        if (error || !data?.user?.email) {
+          userEmailCache[userId] = null;
+          return null;
+        }
+        userEmailCache[userId] = data.user.email;
+        return data.user.email;
+      } catch (e) {
+        console.error('getUserEmail failed:', e);
+        userEmailCache[userId] = null;
+        return null;
+      }
+    }
 
     for (const bill of bills || []) {
       // Skip if snoozed
@@ -197,10 +217,6 @@ serve(async (req) => {
       const userSubs = subsByUser[bill.user_id];
 
       console.log(`Bill "${bill.name}": ${businessDays} business days, ${userSubs?.length || 0} subscriptions`);
-
-      if (!userSubs || userSubs.length === 0) {
-        continue;
-      }
 
       // Check if we should notify for any threshold
       for (const threshold of thresholds) {
@@ -233,14 +249,30 @@ serve(async (req) => {
 
           console.log(`Sending: "${title}" - "${body}"`);
 
-          // Send to all user's subscriptions
-          for (const sub of userSubs) {
-            const success = await sendPushNotification(sub, title, body, vapidPublicKey);
-            if (success) {
-              notificationsSent++;
-            } else {
-              notificationsFailed++;
+          // Send push to all user's subscriptions
+          if (userSubs && userSubs.length > 0) {
+            for (const sub of userSubs) {
+              const success = await sendPushNotification(sub, title, body, vapidPublicKey);
+              if (success) notificationsSent++; else notificationsFailed++;
             }
+          }
+
+          // Send email reminder
+          const email = await getUserEmail(bill.user_id);
+          if (email) {
+            const html = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #111;">
+                <h2 style="margin: 0 0 8px;">${title}</h2>
+                <p style="font-size: 16px; line-height: 1.5; color: #333;">${body}</p>
+                <p style="font-size: 14px; color: #666; margin-top: 24px;">Open the app to mark it paid or snooze the reminder.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                <p style="font-size: 12px; color: #999;">You're receiving this because you have a bill reminder set up.</p>
+              </div>
+            `;
+            const ok = await sendEmail(email, title, html);
+            if (ok) emailsSent++; else emailsFailed++;
+          } else {
+            console.log(`No email found for user ${bill.user_id}`);
           }
           
           break;
@@ -248,14 +280,16 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Done: sent ${notificationsSent}, failed ${notificationsFailed}`);
+    console.log(`Done: push sent ${notificationsSent} (failed ${notificationsFailed}), emails sent ${emailsSent} (failed ${emailsFailed})`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         billsChecked: bills?.length || 0,
         notificationsSent,
-        notificationsFailed
+        notificationsFailed,
+        emailsSent,
+        emailsFailed,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
