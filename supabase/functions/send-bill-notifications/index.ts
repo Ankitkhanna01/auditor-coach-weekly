@@ -24,7 +24,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
         'X-Connection-Api-Key': RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: 'Bill Reminders <onboarding@resend.dev>',
+        from: 'NeverLate <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
@@ -261,15 +261,23 @@ serve(async (req) => {
           const email = await getUserEmail(bill.user_id);
           if (email) {
             const html = `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #111;">
-                <h2 style="margin: 0 0 8px;">${title}</h2>
-                <p style="font-size: 16px; line-height: 1.5; color: #333;">${body}</p>
-                <p style="font-size: 14px; color: #666; margin-top: 24px;">Open the app to mark it paid or snooze the reminder.</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-                <p style="font-size: 12px; color: #999;">You're receiving this because you have a bill reminder set up.</p>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 0; background: #ffffff;">
+                <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 20px 24px; border-radius: 12px 12px 0 0;">
+                  <div style="color: #ffffff; font-size: 20px; font-weight: 700; letter-spacing: -0.3px;">NeverLate</div>
+                  <div style="color: rgba(255,255,255,0.85); font-size: 12px; margin-top: 2px;">Bill reminders that never miss</div>
+                </div>
+                <div style="padding: 28px 24px; color: #111;">
+                  <h2 style="margin: 0 0 8px; font-size: 20px;">${title}</h2>
+                  <p style="font-size: 16px; line-height: 1.5; color: #333; margin: 0 0 20px;">${body}</p>
+                  <p style="font-size: 14px; color: #666; margin: 0;">Open the NeverLate app to mark it paid or snooze the reminder.</p>
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 0 24px;" />
+                <div style="padding: 16px 24px 24px;">
+                  <p style="font-size: 12px; color: #999; margin: 0;">You're receiving this from <strong style="color:#10b981;">NeverLate</strong> because you set up a bill reminder.</p>
+                </div>
               </div>
             `;
-            const ok = await sendEmail(email, title, html);
+            const ok = await sendEmail(email, `NeverLate · ${title}`, html);
             if (ok) emailsSent++; else emailsFailed++;
           } else {
             console.log(`No email found for user ${bill.user_id}`);
