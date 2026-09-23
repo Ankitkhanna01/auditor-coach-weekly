@@ -1,35 +1,579 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-    <meta name="format-detection" content="telephone=no" />
-    <title>NeverLate | Never Miss a Bill Again</title>
-    <meta name="description" content="Stop paying late fees. Get smart reminders 5, 2, and 1 day before your bills are due. Free bill tracking app." />
-    <meta name="author" content="NeverLate" />
-    <meta name="theme-color" content="#000000" />
-    
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="NeverLate" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="mask-icon" href="/mask-icon.svg" color="#9146FF" />
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f12">
+<title>Auditor Coach — Weekly</title>
+<style>
+:root{
+  --bg:#0f0f12; --bg2:#141419;
+  --card:rgba(255,255,255,.045); --ring:rgba(255,255,255,.09);
+  --txt:#f4f4f5; --mut:#a1a1aa; --dim:#71717a;
+  --acc:#34d399; --acc-dim:rgba(52,211,153,.14);
+  --warn:#fbbf24; --warn-dim:rgba(251,191,36,.13);
+  --bad:#f87171; --bad-dim:rgba(248,113,113,.12);
+  --info:#60a5fa; --info-dim:rgba(96,165,250,.12);
+  --r:16px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(600px 300px at 80% -60px, rgba(52,211,153,.08), transparent 60%),
+    radial-gradient(500px 260px at 10% 0px, rgba(96,165,250,.06), transparent 60%),
+    var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh; padding-bottom:96px;
+}
+header{
+  position:sticky; top:0; z-index:20;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  background:rgba(15,15,18,.82); border-bottom:1px solid var(--ring);
+  padding:14px 18px 12px;
+}
+header h1{margin:0; font-size:19px; letter-spacing:-.02em; font-weight:800}
+header h1 .ac{color:var(--acc)}
+header p{margin:2px 0 0; font-size:12px; color:var(--mut)}
+main{max-width:560px; margin:0 auto; padding:14px 14px 0}
+section.tab{display:none}
+section.tab.active{display:block; animation:fade .22s ease}
+@keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+.card{
+  background:var(--card); border:1px solid var(--ring); border-radius:var(--r);
+  padding:16px; margin-bottom:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+}
+.card h3{margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); font-weight:700}
+.row{display:flex; gap:10px; align-items:center}
+.between{justify-content:space-between}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+.stat{background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px 13px}
+.stat .k{font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; font-weight:600}
+.stat .v{font-size:21px; font-weight:800; letter-spacing:-.02em; margin-top:3px}
+.stat .s{font-size:11px; color:var(--dim); margin-top:2px}
+.v.good{color:var(--acc)} .v.warnv{color:var(--warn)} .v.badv{color:var(--bad)}
+.hero{border:1px solid rgba(52,211,153,.25); background:linear-gradient(160deg, rgba(52,211,153,.12), rgba(52,211,153,.03));}
+.hero .net{font-size:38px; font-weight:800; letter-spacing:-.03em; margin:2px 0}
+.hero .sub{font-size:12.5px; color:var(--mut)}
+.finding{display:flex; gap:11px; padding:11px 2px; border-top:1px solid var(--ring); align-items:flex-start}
+.finding:first-of-type{border-top:none}
+.dot{width:9px; height:9px; border-radius:50%; margin-top:5px; flex:none}
+.dot.good{background:var(--acc); box-shadow:0 0 8px var(--acc)}
+.dot.warn{background:var(--warn); box-shadow:0 0 8px var(--warn)}
+.dot.bad{background:var(--bad); box-shadow:0 0 8px var(--bad)}
+.dot.info{background:var(--info); box-shadow:0 0 8px var(--info)}
+.finding .t{font-size:14px; font-weight:700}
+.finding .d{font-size:12.5px; color:var(--mut); margin-top:2px; line-height:1.45}
+.coachcard{border:1px solid rgba(96,165,250,.28); background:linear-gradient(160deg, rgba(96,165,250,.12), rgba(96,165,250,.03));}
+.coachcard .verdict{font-size:16px; font-weight:800; margin-bottom:6px}
+.coachcard p{font-size:13.5px; line-height:1.55; color:#d4d4d8; margin:0 0 8px}
+.coachcard ol{margin:6px 0 0; padding-left:20px; font-size:13.5px; line-height:1.6; color:#e4e4e7}
+.coachcard ol li{margin-bottom:5px}
+.weeknav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.weeknav button{background:var(--card); border:1px solid var(--ring); color:var(--txt); border-radius:12px; padding:9px 14px; font-size:15px; font-weight:700; cursor:pointer}
+.weeknav .lbl{font-size:14px; font-weight:700}
+label.f{display:block; margin-bottom:12px}
+label.f .k{font-size:12px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:5px}
+input,select,textarea{
+  width:100%; background:#1a1a20; border:1px solid var(--ring); color:var(--txt);
+  border-radius:12px; padding:12px 13px; font-size:16px; outline:none;
+}
+input:focus,select:focus{border-color:var(--acc)}
+textarea{resize:vertical; min-height:64px}
+.btn{
+  display:block; width:100%; border:none; border-radius:14px; padding:15px;
+  font-size:16px; font-weight:800; cursor:pointer; letter-spacing:-.01em;
+  background:var(--acc); color:#06281c; margin-top:4px;
+}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--card); color:var(--txt); border:1px solid var(--ring); font-weight:700; padding:12px; font-size:14px}
+.btn.danger{background:var(--bad-dim); color:var(--bad); border:1px solid rgba(248,113,113,.3)}
+.linkbtn{background:none; border:none; color:var(--bad); font-size:13px; cursor:pointer; padding:6px 0; font-weight:600}
+nav{
+  position:fixed; bottom:0; left:0; right:0; z-index:20;
+  background:rgba(15,15,18,.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--ring);
+  display:flex; padding:8px 6px calc(10px + env(safe-area-inset-bottom));
+}
+nav button{
+  flex:1; background:none; border:none; color:var(--dim); cursor:pointer;
+  font-size:11px; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0;
+}
+nav button .ic{font-size:20px}
+nav button.on{color:var(--acc)}
+.weekrow{display:flex; justify-content:space-between; align-items:center; padding:13px 4px; border-top:1px solid var(--ring); cursor:pointer}
+.weekrow:first-of-type{border-top:none}
+.weekrow .wl{font-size:14.5px; font-weight:700}
+.weekrow .ws{font-size:12px; color:var(--mut); margin-top:2px}
+.weekrow .wn{font-size:17px; font-weight:800}
+.ringwrap{display:flex; align-items:center; gap:14px}
+.ringmeta .v{font-size:22px; font-weight:800}
+.ringmeta .k{font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em}
+#toast{
+  position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+  background:#1e1e26; border:1px solid var(--ring); color:var(--txt);
+  padding:11px 18px; border-radius:30px; font-size:13.5px; font-weight:600;
+  opacity:0; pointer-events:none; transition:all .25s ease; z-index:50; white-space:nowrap;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+#lock{position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px}
+#lock.hidden{display:none}
+#lock .lk{font-size:44px; margin-bottom:10px}
+#lock h2{margin:0 0 6px; font-size:20px}
+#lock p{color:var(--mut); font-size:13px; margin:0 0 18px}
+#lock input{text-align:center; font-size:22px; letter-spacing:.4em; max-width:220px}
+.empty{text-align:center; padding:34px 20px; color:var(--mut)}
+.empty .e{font-size:40px; margin-bottom:8px}
+.hint{font-size:12px; color:var(--dim); line-height:1.5; margin-top:8px}
+.divider{height:1px; background:var(--ring); margin:14px -16px}
+.bar{height:8px; border-radius:6px; background:#23232b; overflow:hidden; margin-top:8px}
+.bar > div{height:100%; border-radius:6px; background:var(--acc); transition:width .5s ease}
+</style>
+</head>
+<body>
+<div id="lock" class="hidden">
+  <div class="lk">🔒</div>
+  <h2>Auditor Coach</h2>
+  <p>Enter your passcode to open the books.</p>
+  <input id="lockpin" type="password" inputmode="numeric" maxlength="12" placeholder="••••">
+  <button class="btn" style="max-width:220px; margin-top:14px" onclick="tryUnlock()">Unlock</button>
+</div>
 
-    <!-- Open Graph -->
-    <meta property="og:title" content="NeverLate | Never Miss a Bill Again" />
-    <meta property="og:description" content="Stop paying late fees. Get smart reminders before your bills are due. Free forever." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+<header>
+  <h1>🕵️ Auditor <span class="ac">Coach</span></h1>
+  <p>Weekly audit + coaching for your driving business</p>
+</header>
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@TheAuditor" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+<main>
+  <!-- AUDIT TAB -->
+  <section id="tab-audit" class="tab active">
+    <div class="weeknav">
+      <button onclick="shiftWeek(-1)">‹</button>
+      <div class="lbl" id="weeklabel">—</div>
+      <button onclick="shiftWeek(1)">›</button>
+    </div>
+    <div id="auditbody"></div>
+  </section>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- LOG TAB -->
+  <section id="tab-log" class="tab">
+    <div class="card">
+      <h3>Log a day</h3>
+      <label class="f"><span class="k">Date</span><input type="date" id="f-date"></label>
+      <div class="grid2">
+        <label class="f"><span class="k">Deliveries</span><input type="number" id="f-del" inputmode="numeric" min="0" placeholder="0"></label>
+        <label class="f"><span class="k">Hours worked</span><input type="number" id="f-hrs" inputmode="decimal" min="0" step="0.5" placeholder="0"></label>
+      </div>
+      <div class="grid2">
+        <label class="f"><span class="k">Gross earnings ($)</span><input type="number" id="f-gross" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></label>
+        <label class="f"><span class="k">Tips ($)</span><input type="number" id="f-tips" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></label>
+      </div>
+      <label class="f"><span class="k">Kilometres driven</span><input type="number" id="f-km" inputmode="decimal" min="0" step="0.1" placeholder="0"></label>
+      <div class="grid2">
+        <label class="f"><span class="k">Gas ($)</span><input type="number" id="f-gas" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></label>
+        <label class="f"><span class="k">Other expenses ($)</span><input type="number" id="f-oth" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></label>
+      </div>
+      <div class="grid2">
+        <label class="f"><span class="k">Odometer start</span><input type="number" id="f-os" inputmode="numeric" min="0" placeholder="optional"></label>
+        <label class="f"><span class="k">Odometer end</span><input type="number" id="f-oe" inputmode="numeric" min="0" placeholder="optional"></label>
+      </div>
+      <label class="f"><span class="k">Note</span><textarea id="f-note" placeholder="Anything worth remembering…"></textarea></label>
+      <button class="btn" id="savebtn" onclick="saveEntry()">Save day</button>
+      <div class="row between" style="margin-top:10px">
+        <span class="hint" id="loghint" style="margin:0"></span>
+        <button class="linkbtn" id="delbtn" onclick="deleteEntry()" style="display:none">Delete this day</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Why log daily</h3>
+      <p class="hint" style="margin:0">The audit is only as sharp as the data. One 30-second log per day beats a perfect memory on Sunday night — and the odometer pair keeps your CRA logbook airtight.</p>
+    </div>
+  </section>
+
+  <!-- WEEKS TAB -->
+  <section id="tab-weeks" class="tab">
+    <div class="card">
+      <h3>Past weeks</h3>
+      <div id="weekslist"></div>
+    </div>
+  </section>
+
+  <!-- MORE TAB -->
+  <section id="tab-more" class="tab">
+    <div class="card">
+      <h3>Weekly targets</h3>
+      <div class="grid2">
+        <label class="f"><span class="k">Net target ($)</span><input type="number" id="s-target" inputmode="decimal" min="0" step="10"></label>
+        <label class="f"><span class="k">$/km target</span><input type="number" id="s-pkm" inputmode="decimal" min="0" step="0.05"></label>
+      </div>
+      <div class="grid2">
+        <label class="f"><span class="k">$/hour target</span><input type="number" id="s-phr" inputmode="decimal" min="0" step="0.5"></label>
+        <label class="f"><span class="k">Max expense %</span><input type="number" id="s-exp" inputmode="numeric" min="0" max="100"></label>
+      </div>
+      <label class="f"><span class="k">Week starts on</span>
+        <select id="s-ws">
+          <option value="1">Monday</option><option value="0">Sunday</option><option value="6">Saturday</option>
+        </select>
+      </label>
+      <button class="btn" onclick="saveSettings()">Save targets</button>
+    </div>
+    <div class="card">
+      <h3>Tax & backup</h3>
+      <button class="btn ghost" onclick="exportCSV()">⬇ Export CSV (logbook)</button>
+      <div style="height:8px"></div>
+      <button class="btn ghost" onclick="backupJSON()">⬇ Backup data (JSON)</button>
+      <div style="height:8px"></div>
+      <button class="btn ghost" onclick="document.getElementById('restorefile').click()">⬆ Restore backup</button>
+      <input type="file" id="restorefile" accept=".json,application/json" style="display:none" onchange="restoreJSON(this)">
+      <p class="hint">CSV has every day with km, earnings and expenses — ready for your tax logbook. Back up the JSON before switching phones.</p>
+    </div>
+    <div class="card">
+      <h3>Passcode lock</h3>
+      <div id="passbox"></div>
+    </div>
+    <div class="card">
+      <h3>Danger zone</h3>
+      <button class="btn danger" onclick="wipeAll()">Erase all data</button>
+      <p class="hint">Wipes every logged day on this device. Export first if it matters.</p>
+    </div>
+    <p class="hint" style="text-align:center">Auditor Coach · your data never leaves this device</p>
+  </section>
+</main>
+
+<nav>
+  <button id="nav-audit" class="on" onclick="go('audit')"><span class="ic">📊</span>Audit</button>
+  <button id="nav-log" onclick="go('log')"><span class="ic">✍️</span>Log</button>
+  <button id="nav-weeks" onclick="go('weeks')"><span class="ic">🗓️</span>Weeks</button>
+  <button id="nav-more" onclick="go('more')"><span class="ic">⚙️</span>More</button>
+</nav>
+
+<div id="toast"></div>
+<script>
+/* ============ utils ============ */
+const $ = id => document.getElementById(id);
+const DAY = 86400000;
+const money = n => (n<0?"-$":"$") + Math.abs(n).toLocaleString('en-CA',{minimumFractionDigits:2, maximumFractionDigits:2});
+const money0 = n => (n<0?"-$":"$") + Math.round(Math.abs(n)).toLocaleString('en-CA');
+const num1 = n => (Math.round(n*10)/10).toLocaleString('en-CA');
+const pct = n => Math.round(n*100)+"%";
+const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function dkey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function pkey(k){ const [y,m,dd]=k.split("-").map(Number); return new Date(y, m-1, dd); }
+function addD(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+const dname = d => d.toLocaleDateString('en-CA',{weekday:'short'});
+const dshort = d => d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ============ storage ============ */
+const LS_E="acw_entries_v1", LS_S="acw_settings_v1", LS_P="acw_pass";
+const loadE=()=>{ try{return JSON.parse(localStorage.getItem(LS_E))||{}}catch(e){return{}} };
+const saveE=e=>localStorage.setItem(LS_E,JSON.stringify(e));
+const defS=()=>({target:900, pkm:1.80, phr:24, maxexp:30, ws:1});
+const loadS=()=>Object.assign(defS(), JSON.parse(localStorage.getItem(LS_S)||"{}"));
+const saveS=s=>localStorage.setItem(LS_S,JSON.stringify(s));
+let entries=loadE(), settings=loadS();
+
+/* ============ weeks ============ */
+function weekStartOf(d){
+  const x=new Date(d); x.setHours(0,0,0,0);
+  while(x.getDay()!==settings.ws) x.setDate(x.getDate()-1);
+  return x;
+}
+let viewWeek = weekStartOf(new Date());
+function weekDays(ws){ return [...Array(7)].map((_,i)=>addD(ws,i)); }
+function shiftWeek(n){ viewWeek=addD(viewWeek, n*7); renderAudit(); }
+function weekLabel(ws){
+  const e=addD(ws,6);
+  const sameM = ws.getMonth()===e.getMonth();
+  return ws.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+" – "+(sameM? e.getDate() : e.toLocaleDateString('en-CA',{month:'short',day:'numeric'}));
+}
+
+/* ============ stats ============ */
+function statsFor(ws){
+  const days=weekDays(ws), today=new Date(); today.setHours(0,0,0,0);
+  let gross=0,tips=0,gas=0,oth=0,km=0,hrs=0,del=0,logged=0,elapsed=0;
+  const dayRows=[];
+  days.forEach(d=>{
+    const k=dkey(d), e=entries[k];
+    const past = d<=today; if(past) elapsed++;
+    if(e){
+      logged++;
+      const g=+e.gross||0, t=+e.tips||0, ga=+e.gas||0, o=+e.oth||0;
+      gross+=g; tips+=t; gas+=ga; oth+=o; km+=+e.km||0; hrs+=+e.hrs||0; del+=+e.del||0;
+      dayRows.push({d, e, net:g+t-ga-o});
+    } else dayRows.push({d, e:null, net:0});
+  });
+  const exp=gas+oth, rev=gross+tips, net=rev-exp;
+  return {days, gross, tips, gas, oth, exp, rev, net, km, hrs, del, logged, elapsed,
+    perKm: km>0? rev/km : 0, perHr: hrs>0? net/hrs : 0, expPct: rev>0? exp/rev : 0, dayRows};
+}
+
+/* ============ navigation ============ */
+function go(t){
+  document.querySelectorAll("section.tab").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
+  $("tab-"+t).classList.add("active"); $("nav-"+t).classList.add("on");
+  if(t==="audit") renderAudit();
+  if(t==="log") prepLog();
+  if(t==="weeks") renderWeeks();
+  if(t==="more") prepMore();
+  window.scrollTo(0,0);
+}
+
+/* ============ log tab ============ */
+function prepLog(){
+  const t=$("f-date");
+  if(!t.value) t.value=dkey(new Date());
+  loadDayIntoForm(t.value);
+  $("f-os").oninput=$("f-oe").oninput=autoKm;
+}
+function autoKm(){
+  const a=parseFloat($("f-os").value), b=parseFloat($("f-oe").value);
+  if(a>=0 && b>a) $("f-km").value=(Math.round((b-a)*10)/10);
+}
+function loadDayIntoForm(k){
+  const e=entries[k];
+  $("f-del").value=e?.del??""; $("f-hrs").value=e?.hrs??"";
+  $("f-gross").value=e?.gross??""; $("f-tips").value=e?.tips??"";
+  $("f-km").value=e?.km??""; $("f-gas").value=e?.gas??""; $("f-oth").value=e?.oth??"";
+  $("f-os").value=e?.os??""; $("f-oe").value=e?.oe??""; $("f-note").value=e?.note??"";
+  $("savebtn").textContent=e?"Update day":"Save day";
+  $("delbtn").style.display=e?"block":"none";
+  $("loghint").textContent=e?("Editing "+pkey(k).toLocaleDateString('en-CA',{weekday:'long',month:'short',day:'numeric'})):"";
+}
+$("f-date")?.addEventListener("change", e=>loadDayIntoForm(e.target.value));
+function readNum(id){ const v=parseFloat($(id).value); return isNaN(v)?0:v; }
+function saveEntry(){
+  const k=$("f-date").value; if(!k){toast("Pick a date first");return;}
+  const os=$("f-os").value===""?null:+$("f-os").value, oe=$("f-oe").value===""?null:+$("f-oe").value;
+  entries[k]={del:readNum("f-del"),hrs:readNum("f-hrs"),gross:readNum("f-gross"),tips:readNum("f-tips"),
+    km:readNum("f-km"),gas:readNum("f-gas"),oth:readNum("f-oth"),os,oe,note:$("f-note").value.trim()};
+  saveE(entries); loadDayIntoForm(k); toast("Day saved ✓");
+}
+function deleteEntry(){
+  const k=$("f-date").value;
+  if(entries[k] && confirm("Delete this day's log?")){ delete entries[k]; saveE(entries); loadDayIntoForm(k); toast("Deleted"); }
+}
+
+/* ============ audit engine ============ */
+function runAudit(ws){
+  const s=statsFor(ws), F=[];
+  const add=(level,title,detail)=>F.push({level,title,detail});
+  const prev=statsFor(addD(ws,-7));
+  // 1. missing logs
+  const missing=s.elapsed-s.logged;
+  if(missing>0) add("warn","Audit is blind on "+missing+" day"+(missing>1?"s":""),
+    missing+" of the "+s.elapsed+" elapsed days this week have no log. Missing days hide leaks — log them, even roughly.");
+  else if(s.elapsed>0) add("good","Every day logged","All "+s.elapsed+" elapsed days are on the books. Clean data, sharp audit.");
+  // 2. pace vs target
+  if(s.elapsed>0){
+    const expect=settings.target*(s.elapsed/7);
+    if(s.net>=expect) add("good","Ahead of pace",money(s.net)+" banked vs "+money(expect)+" expected by now. Weekly target: "+money0(settings.target)+".");
+    else if(s.net>=expect*0.8) add("info","Close to pace",money(s.net)+" banked vs "+money(expect)+" expected. A strong finish gets you to "+money0(settings.target)+".");
+    else add("bad","Behind pace",money(s.net)+" banked vs "+money(expect)+" expected by now. You need "+money(expect-s.net)+" more to catch up.");
+  }
+  // 3. $/km
+  if(s.km>0){
+    if(s.perKm>=settings.pkm) add("good","Strong $/km",money(s.perKm)+"/km vs target "+money(settings.pkm)+". Your routing is paying.");
+    else add("warn","$/km below target",money(s.perKm)+"/km vs target "+money(settings.pkm)+". Too many deadhead kilometres — batch orders tighter, skip far pickups.");
+  }
+  // 4. $/hr
+  if(s.hrs>0){
+    if(s.perHr>=settings.phr) add("good","Solid hourly",money(s.perHr)+"/hr net vs target "+money(settings.phr)+".");
+    else add("warn","Hourly below target",money(s.perHr)+"/hr net vs target "+money(settings.phr)+". Work the busy windows, park the dead ones.");
+  }
+  // 5. expense ratio
+  if(s.rev>0){
+    if(s.expPct>settings.maxexp/100) add("bad","Expenses eating the week",(pct(s.expPct))+" of revenue went to expenses (cap "+settings.maxexp+"%). "+money(s.exp)+" out the door — gas is the usual suspect.");
+    else if(s.expPct>settings.maxexp/100*0.8) add("info","Expenses creeping",(pct(s.expPct))+" of revenue on expenses. Watch it before it crosses "+settings.maxexp+"%.");
+    else add("good","Expenses under control",(pct(s.expPct))+" of revenue on expenses. Lean week.");
+  }
+  // 6. week over week
+  if(prev.logged>0 && s.logged>0){
+    const dNet=s.net-prev.net;
+    if(dNet>0) add("good","Up week-over-week","Net is "+money(dNet)+" higher than last week. Whatever changed — keep it.");
+    else if(dNet<0) add("warn","Down week-over-week","Net is "+money(-dNet)+" lower than last week ("+money(prev.net)+" → "+money(s.net)+").");
+    if(prev.perKm>0 && s.perKm>0 && Math.abs(s.perKm-prev.perKm)>0.05)
+      add(s.perKm>prev.perKm?"good":"warn","$/km "+(s.perKm>prev.perKm?"improved":"slipped"), money(prev.perKm)+"/km last week → "+money(s.perKm)+"/km now.");
+  }
+  // 7. best / worst day
+  const withE=s.dayRows.filter(r=>r.e);
+  if(withE.length>=2){
+    const sorted=[...withE].sort((a,b)=>b.net-a.net);
+    add("info","Best day: "+dname(sorted[0].d), dshort(sorted[0].d)+" netted "+money(sorted[0].net)+". Do more of whatever that day looked like.");
+    if(sorted[sorted.length-1].net<sorted[0].net*0.5)
+      add("warn","Weakest day: "+dname(sorted[sorted.length-1].d), dshort(sorted[sorted.length-1].d)+" netted only "+money(sorted[sorted.length-1].net)+". Worth asking what went wrong there.");
+  }
+  // 8. dead shifts
+  withE.forEach(r=>{ if((+r.e.hrs||0)>0 && (+r.e.gross||0)+(+r.e.tips||0)===0)
+    add("warn","Dead shift on "+dname(r.d), dshort(r.d)+": "+r.e.hrs+" hours logged, $0 earned. If that's real, that shift should never happen again."); });
+  // 9. odometer gaps
+  const odays=s.dayRows.filter(r=>r.e && r.e.os!=null && r.e.oe!=null).sort((a,b)=>a.d-b.d);
+  for(let i=1;i<odays.length;i++){
+    const gap=odays[i].e.os-odays[i-1].e.oe;
+    if(gap>2) add("warn","Odometer gap: "+Math.round(gap)+" km", "Between "+dshort(odays[i-1].d)+" and "+dshort(odays[i].d)+", "+Math.round(gap)+" km aren't in the log. CRA wants every kilometre accounted for.");
+  }
+  // 10. streak
+  let streak=0; const t=new Date(); t.setHours(0,0,0,0);
+  if(!entries[dkey(t)]) t.setDate(t.getDate()-1);
+  while(entries[dkey(t)]){ streak++; t.setDate(t.getDate()-1); }
+  if(streak>=7) add("good",streak+"-day logging streak","Over a week of unbroken logs. This is the habit that makes everything else work.");
+  else if(streak>=3) add("info",streak+"-day logging streak","Keep it rolling — the audit gets sharper every consecutive day.");
+  return {s,F};
+}
+/* ============ audit render ============ */
+function ringSVG(frac,color){
+  const c=2*Math.PI*34, off=c*(1-Math.min(1,Math.max(0,frac)));
+  return `<svg width="86" height="86" viewBox="0 0 86 86">
+    <circle cx="43" cy="43" r="34" fill="none" stroke="#23232b" stroke-width="9"/>
+    <circle cx="43" cy="43" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 43 43)"/>
+    <text x="43" y="48" text-anchor="middle" fill="#f4f4f5" font-size="16" font-weight="800">${Math.round(frac*100)}%</text></svg>`;
+}
+function coachTake(s,F){
+  const bad=F.filter(f=>f.level==="bad"), warn=F.filter(f=>f.level==="warn"), good=F.filter(f=>f.level==="good");
+  let verdict, vc;
+  const missing=s.elapsed-s.logged;
+  if(s.logged===0){ verdict="No data yet"; vc="var(--mut)"; }
+  else if(missing>=3){ verdict="Blind week — the audit can't see"; vc="var(--warn)"; }
+  else if(bad.length>0){ verdict="Needs work — leaks found"; vc="var(--bad)"; }
+  else if(warn.length===0 && s.logged>=5){ verdict="Killing it — keep the formula"; vc="var(--acc)"; }
+  else { verdict="On track — tighten the edges"; vc="var(--info)"; }
+  const actions=[...bad,...warn].slice(0,3).map(f=>`<li><b>${esc(f.title)}.</b> ${esc(f.detail)}</li>`);
+  let html=`<div class="card coachcard"><h3>🎙️ Coach's take</h3><div class="verdict" style="color:${vc}">${verdict}</div>`;
+  if(s.logged===0){
+    html+=`<p>Log your first day (Log tab, 30 seconds) and I'll audit it. Until then I'm coaching blind.</p>`;
+  } else {
+    const bits=[];
+    bits.push(`Net <b>${money(s.net)}</b> on ${s.logged} logged day${s.logged>1?"s":""}`);
+    if(s.km>0) bits.push(`${money(s.perKm)}/km`);
+    if(s.hrs>0) bits.push(`${money(s.perHr)}/hr net`);
+    html+=`<p>This week so far: ${bits.join(" · ")}.</p>`;
+    if(actions.length) html+=`<ol>${actions.join("")}</ol>`;
+    else html+=`<p>No leaks found. Bank the week and protect the streak.</p>`;
+  }
+  return html+`</div>`;
+}
+function renderAudit(){
+  $("weeklabel").textContent="Week of "+weekLabel(viewWeek);
+  const {s,F}=runAudit(viewWeek), b=$("auditbody");
+  const tfrac=settings.target>0? s.net/settings.target : 0;
+  const tcol=tfrac>=1?"var(--acc)":tfrac>=0.7?"var(--warn)":"var(--bad)";
+  let h=`<div class="card hero">
+      <h3>Net earnings · ${weekLabel(viewWeek)}</h3>
+      <div class="ringwrap">${ringSVG(tfrac,tcol)}
+        <div class="ringmeta"><div class="v">${money(s.net)}</div>
+        <div class="k">target ${money0(settings.target)} · ${s.logged}/${s.elapsed} days logged</div></div>
+      </div>
+      <div class="bar"><div style="width:${Math.min(100,tfrac*100)}%; background:${tcol}"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="stat"><div class="k">Revenue</div><div class="v">${money(s.rev)}</div><div class="s">${money(s.gross)} gross + ${money(s.tips)} tips</div></div>
+      <div class="stat"><div class="k">Expenses</div><div class="v ${s.expPct>settings.maxexp/100?'badv':''}">${money(s.exp)}</div><div class="s">${s.rev>0?pct(s.expPct):"—"} of revenue</div></div>
+      <div class="stat"><div class="k">$/km</div><div class="v ${s.perKm>=settings.pkm?'good':'warnv'}">${s.km>0?money(s.perKm):"—"}</div><div class="s">${num1(s.km)} km · tgt ${money(settings.pkm)}</div></div>
+      <div class="stat"><div class="k">$/hour net</div><div class="v ${s.perHr>=settings.phr?'good':'warnv'}">${s.hrs>0?money(s.perHr):"—"}</div><div class="s">${num1(s.hrs)} hrs · tgt ${money(settings.phr)}</div></div>
+      <div class="stat"><div class="k">Deliveries</div><div class="v">${s.del}</div><div class="s">${s.logged} days on books</div></div>
+      <div class="stat"><div class="k">Gas</div><div class="v">${money(s.gas)}</div><div class="s">${money(s.oth)} other</div></div>
+    </div>`;
+  h+=coachTake(s,F);
+  h+=`<div class="card"><h3>🔍 Audit findings (${F.length})</h3>`;
+  if(!F.length) h+=`<div class="empty"><div class="e">📭</div>Nothing to audit yet.<br>Log a day to get your first findings.</div>`;
+  F.forEach(f=>{ h+=`<div class="finding"><div class="dot ${f.level}"></div><div><div class="t">${esc(f.title)}</div><div class="d">${esc(f.detail)}</div></div></div>`; });
+  h+=`</div>`;
+  b.innerHTML=h;
+}
+
+/* ============ weeks tab ============ */
+function allWeeks(){
+  const set=new Set(Object.keys(entries).map(k=>dkey(weekStartOf(pkey(k)))));
+  set.add(dkey(weekStartOf(new Date())));
+  return [...set].map(pkey).sort((a,b)=>b-a);
+}
+function renderWeeks(){
+  const ws=allWeeks(), h=[];
+  ws.forEach(w=>{
+    const s=statsFor(w);
+    h.push(`<div class="weekrow" onclick="viewWeek=new Date(${w.getTime()});go('audit')">
+      <div><div class="wl">${weekLabel(w)}</div><div class="ws">${s.logged}/7 days · ${s.km>0?money(s.perKm)+"/km":"no km"}</div></div>
+      <div class="wn" style="color:${s.net>=0?'var(--acc)':'var(--bad)'}">${money(s.net)}</div></div>`);
+  });
+  $("weekslist").innerHTML=h.join("")||`<div class="empty"><div class="e">🗓️</div>No weeks yet.</div>`;
+}
+
+/* ============ more tab ============ */
+function prepMore(){
+  $("s-target").value=settings.target; $("s-pkm").value=settings.pkm;
+  $("s-phr").value=settings.phr; $("s-exp").value=settings.maxexp; $("s-ws").value=settings.ws;
+  renderPass();
+}
+function saveSettings(){
+  settings={target:+$("s-target").value||900, pkm:+$("s-pkm").value||1.8, phr:+$("s-phr").value||24,
+    maxexp:+$("s-exp").value||30, ws:+$("s-ws").value};
+  saveS(settings); viewWeek=weekStartOf(new Date()); toast("Targets saved ✓"); renderAudit();
+}
+function exportCSV(){
+  const ks=Object.keys(entries).sort();
+  if(!ks.length){toast("Nothing to export yet");return;}
+  const rows=[["date","deliveries","hours","km","gross","tips","gas","other_expenses","total_expenses","net","odo_start","odo_end","note"]];
+  ks.forEach(k=>{ const e=entries[k], ex=(+e.gas||0)+(+e.oth||0);
+    rows.push([k,e.del||0,e.hrs||0,e.km||0,e.gross||0,e.tips||0,e.gas||0,e.oth||0,ex.toFixed(2),
+      ((+e.gross||0)+(+e.tips||0)-ex).toFixed(2), e.os??"", e.oe??"", '"'+String(e.note||"").replace(/"/g,'""')+'"']); });
+  dl("auditor-coach-logbook.csv", rows.map(r=>r.join(",")).join("\n"), "text/csv");
+  toast("CSV exported ✓");
+}
+function backupJSON(){
+  dl("auditor-coach-backup.json", JSON.stringify({entries,settings},null,1), "application/json");
+  toast("Backup saved ✓");
+}
+function restoreJSON(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(d.entries){ entries=d.entries; saveE(entries); }
+      if(d.settings){ settings=Object.assign(defS(),d.settings); saveS(settings); }
+      viewWeek=weekStartOf(new Date()); toast("Backup restored ✓"); prepMore();
+    }catch(e){ toast("Bad backup file"); } };
+  r.readAsText(f); input.value="";
+}
+function dl(name,content,type){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function wipeAll(){
+  if(prompt("Type ERASE to wipe all logged days:")==="ERASE"){ entries={}; saveE(entries); toast("All data erased"); renderAudit(); }
+}
+/* passcode */
+async function sha(s){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+function renderPass(){
+  const has=!!localStorage.getItem(LS_P);
+  $("passbox").innerHTML=has
+    ? `<button class="btn ghost" onclick="changePass()">Change passcode</button><div style="height:8px"></div>
+       <button class="btn ghost" onclick="if(confirm('Remove the passcode lock?')){localStorage.removeItem(LS_P);renderPass();toast('Lock removed')}">Remove lock</button>`
+    : `<button class="btn ghost" onclick="changePass()">Set passcode</button>
+       <p class="hint">Locks the app on this device. Same idea as your delivery tracker — keeps casual eyes out.</p>`;
+}
+async function changePass(){
+  const p=prompt("New passcode (min 4 chars):"); if(!p||p.length<4){ if(p!==null) toast("Too short"); return; }
+  localStorage.setItem(LS_P, await sha("acw"+p)); sessionStorage.setItem("acw_unlocked","1"); renderPass(); toast("Passcode set ✓");
+}
+async function tryUnlock(){
+  const v=$("lockpin").value;
+  if(await sha("acw"+v)===localStorage.getItem(LS_P)){ sessionStorage.setItem("acw_unlocked","1"); $("lock").classList.add("hidden"); }
+  else { toast("Wrong passcode"); $("lockpin").value=""; }
+}
+$("lockpin")?.addEventListener("keydown",e=>{ if(e.key==="Enter") tryUnlock(); });
+
+/* ============ init ============ */
+(function(){
+  if(localStorage.getItem(LS_P) && !sessionStorage.getItem("acw_unlocked")) $("lock").classList.remove("hidden");
+  renderAudit();
+})();
+</script>
+</body>
 </html>
